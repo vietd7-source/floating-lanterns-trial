@@ -1,0 +1,85 @@
+{
+  "canvas": {
+    "width": 720,
+    "height": 1280,
+    "fps": 30,
+    "maxConcurrentLanterns": 20,
+    "safeZones": {
+      "top": { "yStart": 0, "yEnd": 160 },
+      "middle": { "yStart": 160, "yEnd": 920 },
+      "bottom": { "yStart": 920, "yEnd": 1280 }
+    }
+  },
+  "wishStore": {
+    "ttlMinutes": 20,
+    "cleanupIntervalMinutes": 5,
+    "maxWishLength": 90,
+    "maxNameLength": 24
+  },
+  "giftTiers": [
+    {
+      "tier": 1,
+      "name": "Den Giay Vang",
+      "label": "Binh luan (0 xu)",
+      "minCoins": 0,
+      "maxCoins": 0,
+      "lifetimeSec": 26,
+      "ttsPriority": "none"
+    },
+    {
+      "tier": 2,
+      "name": "Hoa Sen Hong",
+      "label": "1-19 xu",
+      "minCoins": 1,
+      "maxCoins": 19,
+      "lifetimeSec": 42,
+      "ttsPriority": "low"
+    },
+    {
+      "tier": 3,
+      "name": "Den Troi Khong Minh",
+      "label": "20-99 xu",
+      "minCoins": 20,
+      "maxCoins": 99,
+      "lifetimeSec": 45,
+      "ttsPriority": "medium"
+    },
+    {
+      "tier": 4,
+      "name": "Thuyen Hanh Trinh",
+      "label": "100-499 xu",
+      "minCoins": 100,
+      "maxCoins": 499,
+      "lifetimeSec": 14,
+      "ttsPriority": "high"
+    },
+    {
+      "tier": 5,
+      "name": "Cuc Quang Ngan Ha",
+      "label": "500-1999 xu",
+      "minCoins": 500,
+      "maxCoins": 1999,
+      "lifetimeSec": 15,
+      "ttsPriority": "highest"
+    },
+    {
+      "tier": 6,
+      "name": "Rong Vang Giang The",
+      "label": "2000+ xu",
+      "minCoins": 2000,
+      "maxCoins": null,
+      "lifetimeSec": 18,
+      "ttsPriority": "highest"
+    }
+  ],
+  "tts": {
+    "voice": "vi-VN-HoaiMyNeural",
+    "maxQueue": 6,
+    "minGapMs": 5000,
+    "ambientReadIntervalSec": 165,
+    "duckedVolume": 0.07
+  },
+  "audio": {
+    "bgmVolume": 0.12
+  }
+}
