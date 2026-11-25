@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Option 2 — Đêm Trăng Huyền Ảo (Bùng Nổ Theo Tầng Gift)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #060512;
+      --gold: #fbbf24;
+      --rose: #f472b6;
+      --cyan: #38bdf8;
+      --violet: #a78bfa;
+      --glass: rgba(12, 10, 28, 0.58);
+      --border: rgba(251, 191, 36, 0.22);
+      --text: #f8fafc;
+      --muted: rgba(226, 232, 240, 0.72);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: #030208;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      color: var(--text);
+    }
+
+    .stage-wrapper {
+      position: relative;
+      width: min(100vw, calc(100vh * 9 / 16));
+      height: min(100vh, calc(100vw * 16 / 9));
+      aspect-ratio: 9 / 16;
+      background: var(--bg-deep);
+      box-shadow: 0 0 90px rgba(0, 0, 0, 0.95);
+      overflow: hidden;
+    }
+
+    canvas#riverCanvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      display: block; z-index: 1;
+    }
+
+    /* Chớp sáng nhẹ khi bùng nổ Gift tầm trung / lớn */
+    .burst-flash {
+      position: absolute; inset: 0;
+      z-index: 3; pointer-events: none;
+      opacity: 0;
+      background: radial-gradient(circle at 50% 48%, rgba(251, 191, 36, 0.28), rgba(167, 139, 250, 0.12) 45%, transparent 75%);
+      transition: opacity 0.25s ease;
+    }
+
+    .hud-layer {
+      position: absolute; inset: 0; z-index: 5;
+      pointer-events: none;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 26px 18px 24px 18px;
+    }
+
+    .top-bar { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+
+    .brand-card {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 10px 15px;
+    }
+
+    .brand-tag {
+      font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--gold); font-weight: 600; display: flex; align-items: center; gap: 6px;
+    }
+
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #34d399; box-shadow: 0 0 10px #34d399;
+    }
+
+    .brand-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 23px; font-weight: 600; color: #fff8e7; line-height: 1.1; margin-top: 2px;
+    }
+
+    .brand-sub { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+
+    .vip-box {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(244, 114, 182, 0.28);
+      border-radius: 18px;
+      padding: 10px 13px;
+      min-width: 144px; max-width: 178px;
+    }
+
+    .vip-title {
+      font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--rose); font-weight: 700; margin-bottom: 7px;
+      display: flex; justify-content: space-between;
+    }
+
+    .vip-list { display: flex; flex-direction: column; gap: 5px; }
+
+    .vip-row {
+      display: flex; align-items: center; gap: 7px; font-size: 11px;
+      background: rgba(255, 255, 255, 0.04); padding: 4px 7px; border-radius: 9px;
+    }
+
+    .vip-badge {
+      width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center;
+      font-size: 9.5px; font-weight: 700; background: rgba(244, 114, 182, 0.22); color: #fbcfe8;
+    }
+
+    .vip-row:nth-child(1) .vip-badge {
+      background: linear-gradient(135deg, #fde047, #f97316); color: #18181b;
+    }
+
+    .vip-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+    .vip-coin { font-size: 10px; color: var(--gold); font-weight: 600; }
+
+    .spotlight {
+      align-self: center;
+      max-width: 92%;
+      background: linear-gradient(135deg, rgba(20, 14, 42, 0.88), rgba(45, 16, 48, 0.88));
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(251, 191, 36, 0.55);
+      border-radius: 22px;
+      padding: 12px 20px;
+      text-align: center;
+      box-shadow: 0 14px 42px rgba(0, 0, 0, 0.6), 0 0 32px rgba(251, 191, 36, 0.25);
+      opacity: 0; transform: translateY(-10px) scale(0.96);
+      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .spotlight.active { opacity: 1; transform: translateY(0) scale(1); }
+    .spotlight-kicker { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 3px; }
+    .spotlight-text { font-family: 'Cormorant Garamond', serif; font-size: 21px; font-style: italic; color: #ffffff; line-height: 1.25; }
+    .spotlight-by { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    .bottom-bar { display: flex; justify-content: center; margin-bottom: 4px; }
+    .guide-chip {
+      background: rgba(8, 7, 20, 0.72); backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 999px;
+      padding: 6px 15px; font-size: 11px; color: rgba(248, 250, 252, 0.92);
+      display: flex; gap: 8px; align-items: center;
+    }
+    .guide-chip b { color: var(--gold); font-weight: 600; }
+
+    .preview-dock {
+      position: fixed; right: 18px; bottom: 18px; z-index: 50; width: 254px;
+      background: rgba(12, 11, 24, 0.92); backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 16px;
+      padding: 12px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); font-size: 11.5px;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .preview-dock.hidden { opacity: 0; pointer-events: none; transform: translateY(10px); }
+    .dock-head { display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .dock-title { color: var(--gold); font-weight: 700; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .dock-sub { color: var(--muted); font-size: 10px; }
+    .dock-input {
+      width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 9px; padding: 7px 9px; color: #fff; font-family: inherit; font-size: 11.5px;
+      outline: none; margin-bottom: 8px;
+    }
+    .dock-input:focus { border-color: var(--gold); }
+    .dock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .dock-btn {
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      color: #fff; border-radius: 9px; padding: 7px 8px; font-family: inherit;
+      font-size: 10.8px; font-weight: 500; cursor: pointer; transition: 0.16s ease;
+    }
+    .dock-btn:hover { background: rgba(251, 191, 36, 0.2); border-color: rgba(251, 191, 36, 0.5); }
+    .dock-btn.burst {
+      grid-column: span 2;
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.28), rgba(244, 114, 182, 0.24));
+      border-color: rgba(251, 191, 36, 0.65); font-weight: 700; color: #fffbeb;
+    }
+    .show-dock-btn {
+      position: fixed; right: 18px; bottom: 18px; z-index: 49; display: none;
+      background: rgba(12, 11, 24, 0.88); color: var(--gold); border: 1px solid rgba(251, 191, 36, 0.4);
+      border-radius: 999px; padding: 7px 13px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
+    }
+    .preview-dock.hidden + .show-dock-btn { display: block; }
+  </style>
+</head>
+<body>
+  <div class="stage-wrapper">
+    <canvas id="riverCanvas" width="720" height="1280"></canvas>
+    <div class="burst-flash" id="burstFlash"></div>
+
+    <div class="hud-layer">
+      <div class="top-bar">
+        <div class="brand-card">
+          <div class="brand-tag"><span class="dot"></span> HUYỀN ẢO ĐÊM TRĂNG</div>
+          <div class="brand-title">Cung Đàn Bên Sông</div>
+          <div class="brand-sub">Quà càng lớn — Ánh sáng càng rực rỡ</div>
+        </div>
+
+        <div class="vip-box">
+          <div class="vip-title"><span>Bảng Tri Ân</span><span>✦</span></div>
+          <div class="vip-list" id="vipList"></div>
+        </div>
+      </div>
+
+      <div class="spotlight" id="spotlight">
+        <div class="spotlight-kicker" id="spotKicker">KHOẢNH KHẮC TỎA SÁNG</div>
+        <div class="spotlight-text" id="spotText">“Chúc mọi điều tốt đẹp nhất sẽ đến với bạn.”</div>
+        <div class="spotlight-by" id="spotBy">— Lan Khuê</div>
+      </div>
+
+      <div class="bottom-bar">
+        <div class="guide-chip">
+          <span>Bình luận: <b>Đèn Giấy</b></span>
+          <span>·</span>
+          <span>1 xu: <b>Sen Hồng</b></span>
+          <span>·</span>
+          <span>20+ xu: <b>Trời Sao</b></span>
+          <span>·</span>
+          <span>100+ xu: <b>Đại Lễ Bùng Nổ</b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-dock" id="previewDock">
+    <div class="dock-head">
+      <span class="dock-title">Option 2 · Tầng Quà</span>
+      <span class="dock-sub">[H] ẩn/hiện</span>
+    </div>
+    <input type="text" class="dock-input" id="wishInput" placeholder="Nhập lời chúc để test..." maxlength="55" />
+    <div class="dock-grid">
+      <button class="dock-btn" onclick="triggerEvent('comment')">+ Bình luận (0 xu)</button>
+      <button class="dock-btn" onclick="triggerEvent('small')">+ Hoa Sen (1 xu)</button>
+      <button class="dock-btn" onclick="triggerEvent('medium')">+ Đèn Trời (20 xu)</button>
+      <button class="dock-btn" onclick="triggerEvent('heart')">+ Thả Tim</button>
+      <button class="dock-btn burst" onclick="triggerEvent('mega')">✦ ĐẠI LỄ BÙNG NỔ (100+ xu)</button>
+    </div>
+  </div>
+  <button class="show-dock-btn" id="showDockBtn" onclick="toggleDock(false)">Hiện bảng thử</button>
+
+  <script>
+    const canvas = document.getElementById('riverCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    const DEMOS = [
+      { name: 'Lan Khuê', wish: 'Chúc mọi điều tốt đẹp nhất sẽ đến với bạn.' },
+      { name: 'Tuấn Kiệt', wish: 'Mong đêm nay thật bình yên và nhẹ nhõm.' },
+      { name: 'Hải Yến', wish: 'Gửi ngàn lời chúc an lành tới gia đình.' },
+      { name: 'Nhật Minh', wish: 'Rực rỡ lên nhé, bạn xứng đáng với điều tuyệt vời.' }
+    ];
+
+    const VIP = [
+      { name: 'Khánh Linh', coin: '520 xu' },
+      { name: 'Minh Triết', coin: '280 xu' },
+      { name: 'Thùy Dương', coin: '120 xu' }
+    ];
+
+    function renderVip() {
+      document.getElementById('vipList').innerHTML = VIP.map((v, i) => `
+        <div class="vip-row">
+          <div class="vip-badge">${i + 1}</div>
+          <div class="vip-name">${esc(v.name)}</div>
+          <div class="vip-coin">${esc(v.coin)}</div>
+        </div>
+      `).join('');
+    }
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    const stars = Array.from({ length: 85 }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * (H * 0.43),
+      r: Math.random() * 1.7 + 0.4,
+      p: Math.random() * Math.PI * 2,
+      s: Math.random() * 0.03 + 0.01
+    }));
+
+    const lanterns = [];
+    const skyLanterns = [];
+    const sparkles = [];
+    const ripples = [];
+    let megaWaveTimer = 0;
+    let royalVessel = null;
+    let spotTimer = null;
+
+    function showSpot(kicker, text, by) {
+      const el = document.getElementById('spotlight');
+      document.getElementById('spotKicker').textContent = kicker;
+      document.getElementById('spotText').textContent = `“${text}”`;
+      document.getElementById('spotBy').textContent = `— ${by}`;
+      el.classList.add('active');
+      clearTimeout(spotTimer);
+      spotTimer = setTimeout(() => el.classList.remove('active'), 5500);
+    }
+
+    function spawnSparkles(x, y, count, palette) {
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.35;
+        const speed = 1.1 + Math.random() * 3.4;
+        sparkles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 0.6,
+          r: Math.random() * 2.8 + 1.2,
+          color: palette[i % palette.length],
+          alpha: 1,
+          decay: 0.013 + Math.random() * 0.012
+        });
+      }
+    }
+
+    function addLantern(tier, user, wish) {
+      const w = (wish || 'Chúc đêm an lành và nhiều niềm vui.').trim();
+      const shortW = w.length > 40 ? w.slice(0, 40) + '…' : w;
+      const x = 135 + Math.random() * (W - 270);
+      const y = H * 0.84 + Math.random() * 55;
+      const isSmall = tier === 'small';
+
+      lanterns.push({
+        tier, user, wish: shortW,
+        x, y, baseX: x,
+        phase: Math.random() * Math.PI * 2,
+        vy: isSmall ? -0.35 : -0.48,
+        scale: isSmall ? 1.28 : 1.0,
+        alpha: 0, life: 0,
+        maxLife: isSmall ? 1350 : 1000
+      });
+
+      ripples.push({
+        x, y, r: 8, maxR: isSmall ? 90 : 62,
+        alpha: 0.75,
+        color: isSmall ? 'rgba(244, 114, 182, 0.6)' : 'rgba(251, 191, 36, 0.45)'
+      });
+
+      if (isSmall) {
+        spawnSparkles(x, y, 16, ['#f472b6', '#fbcfe8', '#fde047']);
+        showSpot('HOA SEN HỒNG · QUÀ 1 XU', shortW, user);
+      }
+    }
+
+    function addSkyLantern(user, wish) {
+      const w = (wish || 'Bay cao mọi ước mơ và bình an.').trim();
+      const shortW = w.length > 42 ? w.slice(0, 42) + '…' : w;
+      const x = 150 + Math.random() * (W - 300);
+      const y = H * 0.70;
+
+      skyLanterns.push({
+        x, y, baseX: x,
+        phase: Math.random() * Math.PI * 2,
+        vy: -1.35,
+        alpha: 0,
+        user, wish: shortW
+      });
+
+      spawnSparkles(x, y, 24, ['#fbbf24', '#38bdf8', '#fffbeb']);
+      showSpot('ĐÈN TRỜI TỎA SÁNG · QUÀ TẦM TRUNG', shortW, user);
+    }
+
+    function triggerMegaGift(user, wish) {
+      const w = (wish || 'Rạng rỡ phúc lộc, vạn sự hanh thông!').trim();
+      const shortW = w.length > 46 ? w.slice(0, 46) + '…' : w;
+
+      megaWaveTimer = 420;
+      const flash = document.getElementById('burstFlash');
+      flash.style.opacity = '1';
+      setTimeout(() => { flash.style.opacity = '0'; }, 420);
+
+      // Thả 1 cụm đèn trời + nhiều chùm pháo hoa ánh sáng + thuyền rồng/hoa đăng lớn
+      for (let i = 0; i < 3; i++) {
+        const sx = 180 + i * 180;
+        const sy = H * 0.48 + (i % 2) * 55;
+        spawnSparkles(sx, sy, 34, ['#fbbf24', '#f472b6', '#38bdf8', '#a78bfa', '#ffffff']);
+      }
+
+      skyLanterns.push({
+        x: W * 0.5, y: H * 0.66, baseX: W * 0.5,
+        phase: 0, vy: -1.5, alpha: 0, user, wish: shortW
+      });
+
+      royalVessel = {
+        x: -190, y: H * 0.63, vx: 1.85, phase: 0, user, wish: shortW
+      };
+
+      showSpot('✦ ĐẠI LỄ BÙNG NỔ · QUÀ 100+ XU ✦', shortW, user);
+    }
+
+    function triggerEvent(type) {
+      const pick = DEMOS[Math.floor(Math.random() * DEMOS.length)];
+      const typed = document.getElementById('wishInput').value.trim();
+      const wish = typed || pick.wish;
+
+      if (type === 'comment') addLantern('normal', pick.name, wish);
+      else if (type === 'small') addLantern('small', pick.name, wish);
+      else if (type === 'medium') addSkyLantern(pick.name, wish);
+      else if (type === 'heart') {
+        for (let i = 0; i < 5; i++) {
+          const hx = 110 + Math.random() * (W - 220);
+          const hy = H * 0.54 + Math.random() * (H * 0.34);
+          ripples.push({ x: hx, y: hy, r: 6, maxR: 65, alpha: 0.7, color: 'rgba(244, 114, 182, 0.5)' });
+          spawnSparkles(hx, hy, 8, ['#f9a8d4', '#fde68a']);
+        }
+      } else if (type === 'mega') triggerMegaGift(pick.name, wish);
+    }
+
+    function toggleDock(force) {
+      const d = document.getElementById('previewDock');
+      if (typeof force === 'boolean') d.classList.toggle('hidden', force);
+      else d.classList.toggle('hidden');
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'h' && document.activeElement.tagName !== 'INPUT') toggleDock();
+    });
+
+    function drawBg(t) {
+      const g = ctx.createLinearGradient(0, 0, 0, H * 0.45);
+      if (megaWaveTimer > 0) {
+        g.addColorStop(0, '#120b2e');
+        g.addColorStop(0.55, '#241447');
+        g.addColorStop(1, '#361b54');
+      } else {
+        g.addColorStop(0, '#050410');
+        g.addColorStop(0.6, '#0c0b24');
+        g.addColorStop(1, '#161438');
+      }
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H * 0.46);
+
+      stars.forEach(s => {
+        s.p += s.s;
+        const a = 0.25 + 0.7 * (0.5 + 0.5 * Math.sin(s.p));
+        ctx.fillStyle = `rgba(255, 250, 235, ${a.toFixed(2)})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      const mx = W * 0.5, my = H * 0.20;
+      const haloR = megaWaveTimer > 0 ? 230 : 175;
+      const halo = ctx.createRadialGradient(mx, my, 18, mx, my, haloR);
+      halo.addColorStop(0, megaWaveTimer > 0 ? 'rgba(251, 191, 36, 0.48)' : 'rgba(251, 191, 36, 0.32)');
+      halo.addColorStop(0.5, 'rgba(167, 139, 250, 0.14)');
+      halo.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(mx, my, haloR, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fff7df';
+      ctx.beginPath();
+      ctx.arc(mx, my, 42, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#09081b';
+      ctx.beginPath();
+      ctx.moveTo(0, H * 0.42);
+      ctx.lineTo(0, H * 0.35);
+      ctx.quadraticCurveTo(W * 0.25, H * 0.295, W * 0.5, H * 0.35);
+      ctx.quadraticCurveTo(W * 0.76, H * 0.285, W, H * 0.345);
+      ctx.lineTo(W, H * 0.42);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawRiver(t) {
+      const top = H * 0.40;
+      const wg = ctx.createLinearGradient(0, top, 0, H);
+      wg.addColorStop(0, megaWaveTimer > 0 ? '#18133d' : '#0d142e');
+      wg.addColorStop(0.5, '#080c20');
+      wg.addColorStop(1, '#040612');
+      ctx.fillStyle = wg;
+      ctx.fillRect(0, top, W, H - top);
+
+      for (let i = 0; i < 24; i++) {
+        const py = top + 18 + i * 28 + Math.sin(t * 0.0016 + i) * 4;
+        const w = 36 + Math.sin(t * 0.002 + i * 0.7) * 18 + (i / 24) * 55;
+        const px = W * 0.5 - w * 0.5 + Math.cos(t * 0.0013 + i) * 14;
+        const a = Math.max(0.05, (megaWaveTimer > 0 ? 0.36 : 0.24) - i * 0.007);
+        ctx.fillStyle = `rgba(253, 230, 138, ${a.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.roundRect(px, py, w, 3.2, 2);
+        ctx.fill();
+      }
+    }
+
+    function drawRipples() {
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const r = ripples[i];
+        r.r += 0.65;
+        r.alpha -= 0.0065;
+        if (r.alpha <= 0 || r.r > r.maxR) { ripples.splice(i, 1); continue; }
+        ctx.save();
+        ctx.strokeStyle = r.color;
+        ctx.globalAlpha = Math.max(0, r.alpha);
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.ellipse(r.x, r.y, r.r * 1.45, r.r * 0.45, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function drawLanterns(t) {
+      for (let i = lanterns.length - 1; i >= 0; i--) {
+        const l = lanterns[i];
+        l.life++;
+        l.phase += 0.022;
+        l.y += l.vy;
+        l.x = l.baseX + Math.sin(l.phase) * 18;
+        if (l.life < 55) l.alpha = l.life / 55;
+        else if (l.life > l.maxLife - 85) l.alpha = Math.max(0, (l.maxLife - l.life) / 85);
+        else l.alpha = 1;
+
+        if (l.life >= l.maxLife || l.y < H * 0.39) { lanterns.splice(i, 1); continue; }
+
+        const isSmall = l.tier === 'small';
+        ctx.save();
+        ctx.globalAlpha = l.alpha;
+        ctx.translate(l.x, l.y);
+        ctx.scale(l.scale, l.scale);
+
+        const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 58);
+        glow.addColorStop(0, isSmall ? 'rgba(244, 114, 182, 0.38)' : 'rgba(251, 191, 36, 0.32)');
+        glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, 0, 58, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = isSmall ? '#f472b6' : '#fbbf24';
+        ctx.beginPath();
+        ctx.moveTo(-20, 0); ctx.lineTo(20, 0); ctx.lineTo(13, 13); ctx.lineTo(-13, 13);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#fffbeb';
+        ctx.beginPath();
+        ctx.arc(0, 3, 6 * (0.85 + 0.15 * Math.sin(t * 0.012 + l.phase)), 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = '600 11.5px "Be Vietnam Pro", sans-serif';
+        const nw = ctx.measureText(l.user).width;
+        ctx.font = '400 12px "Be Vietnam Pro", sans-serif';
+        const ww = ctx.measureText(l.wish).width;
+        const bw = Math.min(276, Math.max(112, Math.max(nw, ww) + 22));
+        const by = -52;
+
+        ctx.fillStyle = 'rgba(10, 9, 24, 0.8)';
+        ctx.strokeStyle = isSmall ? 'rgba(244, 114, 182, 0.5)' : 'rgba(251, 191, 36, 0.38)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(-bw / 2, by, bw, 39, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = isSmall ? '#f9a8d4' : '#fde047';
+        ctx.font = '600 11.5px "Be Vietnam Pro", sans-serif';
+        ctx.fillText(l.user, 0, by + 15);
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '400 11.8px "Be Vietnam Pro", sans-serif';
+        ctx.fillText(l.wish, 0, by + 30);
+
+        ctx.restore();
+      }
+    }
+
+    function drawSkyLanterns() {
+      for (let i = skyLanterns.length - 1; i >= 0; i--) {
+        const s = skyLanterns[i];
+        s.y += s.vy;
+        s.phase += 0.026;
+        s.x = s.baseX + Math.sin(s.phase) * 24;
+        s.alpha = Math.min(1, s.alpha + 0.035);
+        if (s.y < H * 0.24) s.alpha -= 0.016;
+        if (s.alpha <= 0 || s.y < 110) { skyLanterns.splice(i, 1); continue; }
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, s.alpha);
+        ctx.translate(s.x, s.y);
+
+        const g = ctx.createRadialGradient(0, 0, 6, 0, 0, 82);
+        g.addColorStop(0, 'rgba(251, 191, 36, 0.48)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(0, 0, 82, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.moveTo(-15, -18); ctx.lineTo(15, -18); ctx.lineTo(23, 8); ctx.lineTo(-23, 8);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#fffbeb';
+        ctx.beginPath();
+        ctx.arc(0, -2, 8.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#fde68a';
+        ctx.font = '600 12px "Be Vietnam Pro", sans-serif';
+        ctx.fillText(s.user, 0, 26);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '400 12px "Be Vietnam Pro", sans-serif';
+        ctx.fillText(s.wish, 0, 42);
+
+        ctx.restore();
+      }
+    }
+
+    function drawRoyalVessel() {
+      if (!royalVessel) return;
+      royalVessel.x += royalVessel.vx;
+      royalVessel.phase += 0.035;
+      const by = royalVessel.y + Math.sin(royalVessel.phase) * 6;
+      if (royalVessel.x > W + 210) { royalVessel = null; return; }
+
+      ctx.save();
+      ctx.translate(royalVessel.x, by);
+
+      const aura = ctx.createRadialGradient(0, 0, 14, 0, 0, 130);
+      aura.addColorStop(0, 'rgba(251, 191, 36, 0.45)');
+      aura.addColorStop(0.55, 'rgba(56, 189, 248, 0.18)');
+      aura.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = aura;
+      ctx.beginPath();
+      ctx.arc(0, 0, 130, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.moveTo(-74, 6); ctx.quadraticCurveTo(0, 28, 74, 6); ctx.lineTo(54, -5); ctx.lineTo(-54, -5);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#fffbeb';
+      ctx.beginPath();
+      ctx.roundRect(-28, -28, 56, 23, 7);
+      ctx.fill();
+
+      ctx.fillStyle = '#1e1b4b';
+      ctx.textAlign = 'center';
+      ctx.font = '700 10.5px "Be Vietnam Pro", sans-serif';
+      ctx.fillText('✦ ĐẠI LỄ ✦', 0, -13);
+
+      ctx.fillStyle = 'rgba(12, 10, 28, 0.88)';
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.75)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.roundRect(-132, -70, 264, 37, 11);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#fde047';
+      ctx.font = '600 12px "Be Vietnam Pro", sans-serif';
+      ctx.fillText(royalVessel.user, 0, -54);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '400 11.5px "Be Vietnam Pro", sans-serif';
+      ctx.fillText(royalVessel.wish, 0, -39);
+
+      ctx.restore();
+    }
+
+    function drawSparkles() {
+      for (let i = sparkles.length - 1; i >= 0; i--) {
+        const sp = sparkles[i];
+        sp.x += sp.vx;
+        sp.y += sp.vy;
+        sp.vy += 0.03;
+        sp.alpha -= sp.decay;
+        if (sp.alpha <= 0) { sparkles.splice(i, 1); continue; }
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, sp.alpha);
+        ctx.fillStyle = sp.color;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function loop(t) {
+      if (megaWaveTimer > 0) megaWaveTimer--;
+      ctx.clearRect(0, 0, W, H);
+      drawBg(t);
+      drawRiver(t);
+      drawRipples();
+      drawLanterns(t);
+      drawSkyLanterns();
+      drawRoyalVessel();
+      drawSparkles();
+      requestAnimationFrame(loop);
+    }
+
+    renderVip();
+    addLantern('normal', 'Lan Khuê', 'Chúc mọi điều tốt đẹp nhất sẽ đến với bạn.');
+    setTimeout(() => addLantern('small', 'Tuấn Kiệt', 'Mong đêm nay thật bình yên và nhẹ nhõm.'), 850);
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

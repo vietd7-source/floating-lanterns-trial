@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dòng Sông Lời Chúc — Bản Nâng Cấp 6 Tầng Hiệu Ứng</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #050511;
+      --gold: #fbbf24;
+      --gold-light: #fef08a;
+      --rose: #f472b6;
+      --cyan: #38bdf8;
+      --violet: #a78bfa;
+      --glass: rgba(11, 10, 26, 0.58);
+      --border: rgba(251, 191, 36, 0.24);
+      --text: #f8fafc;
+      --muted: rgba(226, 232, 240, 0.74);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: #020207;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      color: var(--text);
+    }
+
+    .stage-wrapper {
+      position: relative;
+      width: min(100vw, calc(100vh * 9 / 16));
+      height: min(100vh, calc(100vw * 16 / 9));
+      aspect-ratio: 9 / 16;
+      background: var(--bg-deep);
+      box-shadow: 0 0 90px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(251, 191, 36, 0.14);
+      overflow: hidden;
+    }
+
+    canvas#riverCanvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      display: block; z-index: 1;
+    }
+
+    /* Chớp sáng không gian khi nổ Gift tầm trung / lớn */
+    .ambient-flash {
+      position: absolute; inset: 0;
+      z-index: 3; pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+
+    .hud-layer {
+      position: absolute; inset: 0; z-index: 5;
+      pointer-events: none;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 26px 18px 24px 18px;
+    }
+
+    .top-bar { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+
+    .brand-card {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 10px 15px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38);
+    }
+
+    .brand-tag {
+      font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--gold); font-weight: 700; display: flex; align-items: center; gap: 6px;
+    }
+
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #34d399; box-shadow: 0 0 10px #34d399;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.6; }
+    }
+
+    .brand-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px; font-weight: 600; color: #fff8e7; line-height: 1.1; margin-top: 2px;
+    }
+
+    .brand-sub { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+
+    /* Bảng Tri Ân VIP có huy hiệu Kim Cương cho mốc 500+ xu */
+    .vip-box {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(251, 191, 36, 0.28);
+      border-radius: 18px;
+      padding: 10px 13px;
+      min-width: 152px; max-width: 188px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38);
+    }
+
+    .vip-title {
+      font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--gold); font-weight: 700; margin-bottom: 7px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .vip-list { display: flex; flex-direction: column; gap: 5px; }
+
+    .vip-row {
+      display: flex; align-items: center; gap: 6px; font-size: 11px;
+      background: rgba(255, 255, 255, 0.045); padding: 4px 7px; border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+
+    .vip-row.diamond {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(56, 189, 248, 0.16));
+      border-color: rgba(251, 191, 36, 0.55);
+    }
+
+    .vip-badge {
+      width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center;
+      font-size: 9.5px; font-weight: 800; background: rgba(244, 114, 182, 0.24); color: #fbcfe8;
+      flex-shrink: 0;
+    }
+
+    .vip-row:nth-child(1) .vip-badge {
+      background: linear-gradient(135deg, #fef08a, #f59e0b); color: #18181b;
+    }
+
+    .vip-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+    .vip-coin { font-size: 10px; color: var(--gold); font-weight: 700; flex-shrink: 0; }
+
+    /* Spotlight Banner chuẩn cho Gift thường & trung */
+    .spotlight {
+      align-self: center;
+      max-width: 92%;
+      background: linear-gradient(135deg, rgba(18, 13, 38, 0.88), rgba(42, 16, 46, 0.88));
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(251, 191, 36, 0.55);
+      border-radius: 22px;
+      padding: 12px 20px;
+      text-align: center;
+      box-shadow: 0 14px 42px rgba(0, 0, 0, 0.6), 0 0 32px rgba(251, 191, 36, 0.25);
+      opacity: 0; transform: translateY(-10px) scale(0.96);
+      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .spotlight.active { opacity: 1; transform: translateY(0) scale(1); }
+    .spotlight-kicker { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 3px; }
+    .spotlight-text { font-family: 'Cormorant Garamond', serif; font-size: 21px; font-style: italic; color: #ffffff; line-height: 1.25; }
+    .spotlight-by { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* Thẻ Vinh Danh Siêu Quà (500+ xu & 2000+ xu) chiếm trọn trung tâm khung hình */
+    .grand-ceremony-card {
+      position: absolute;
+      left: 50%; top: 37%;
+      transform: translate(-50%, -50%) scale(0.88);
+      width: 88%;
+      z-index: 6;
+      pointer-events: none;
+      text-align: center;
+      padding: 20px 22px;
+      border-radius: 26px;
+      background: radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.26), rgba(14, 11, 32, 0.92) 72%);
+      backdrop-filter: blur(18px);
+      border: 1.5px solid rgba(253, 224, 71, 0.78);
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.78), 0 0 48px rgba(251, 191, 36, 0.38);
+      opacity: 0;
+      transition: all 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .grand-ceremony-card.active {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .grand-ceremony-card.imperial {
+      background: radial-gradient(circle at 50% 0%, rgba(253, 224, 71, 0.42), rgba(48, 12, 24, 0.94) 74%);
+      border: 2px solid #fde047;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.85), 0 0 70px rgba(251, 191, 36, 0.62);
+    }
+
+    .ceremony-crown {
+      font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
+      color: #fde047; margin-bottom: 6px;
+    }
+
+    .ceremony-user {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 30px; font-weight: 700; color: #ffffff;
+      text-shadow: 0 0 20px rgba(251, 191, 36, 0.65);
+      line-height: 1.15;
+    }
+
+    .ceremony-coin-pill {
+      display: inline-block;
+      margin: 7px 0 9px 0;
+      padding: 3px 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #fde047, #f59e0b);
+      color: #18181b;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+    }
+
+    .ceremony-wish {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; font-style: italic;
+      color: #fffbeb; line-height: 1.28;
+    }
+
+    .bottom-bar { display: flex; justify-content: center; margin-bottom: 4px; }
+    .guide-chip {
+      background: rgba(8, 7, 20, 0.72); backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 999px;
+      padding: 6px 14px; font-size: 10.5px; color: rgba(248, 250, 252, 0.92);
+      display: flex; gap: 7px; align-items: center; flex-wrap: wrap; justify-content: center;
+    }
+    .guide-chip b { color: var(--gold); font-weight: 600; }
+
+    /* Bảng điều khiển Test 6 Tầng Gift */
+    .preview-dock {
+      position: fixed; right: 18px; bottom: 18px; z-index: 50; width: 276px;
+      background: rgba(11, 10, 24, 0.94); backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 16px;
+      padding: 12px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75); font-size: 11.5px;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .preview-dock.hidden { opacity: 0; pointer-events: none; transform: translateY(10px); }
+    .dock-head { display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .dock-title { color: var(--gold); font-weight: 700; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .dock-sub { color: var(--muted); font-size: 10px; }
+    .dock-row-inputs { display: flex; gap: 6px; margin-bottom: 8px; }
+    .dock-input {
+      width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 9px; padding: 7px 9px; color: #fff; font-family: inherit; font-size: 11px;
+      outline: none;
+    }
+    .dock-input.name { width: 42%; }
+    .dock-input:focus { border-color: var(--gold); }
+    .dock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .dock-btn {
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      color: #fff; border-radius: 9px; padding: 7px 8px; font-family: inherit;
+      font-size: 10.5px; font-weight: 500; cursor: pointer; transition: 0.16s ease;
+      text-align: left;
+    }
+    .dock-btn span { display: block; font-size: 9.5px; color: var(--muted); margin-top: 1px; }
+    .dock-btn:hover { background: rgba(251, 191, 36, 0.18); border-color: rgba(251, 191, 36, 0.5); }
+
+    .dock-btn.tier4 {
+      border-color: rgba(56, 189, 248, 0.45);
+      background: rgba(56, 189, 248, 0.12);
+    }
+    .dock-btn.tier5 {
+      grid-column: span 2;
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.25), rgba(56, 189, 248, 0.22));
+      border-color: rgba(167, 139, 250, 0.65);
+      font-weight: 700; text-align: center;
+    }
+    .dock-btn.tier6 {
+      grid-column: span 2;
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.36), rgba(244, 63, 94, 0.3));
+      border-color: #fde047;
+      font-weight: 800; color: #fffbeb; text-align: center;
+      box-shadow: 0 0 18px rgba(251, 191, 36, 0.25);
+    }
+
+    .show-dock-btn {
+      position: fixed; right: 18px; bottom: 18px; z-index: 49; display: none;
+      background: rgba(11, 10, 24, 0.9); color: var(--gold); border: 1px solid rgba(251, 191, 36, 0.45);
+      border-radius: 999px; padding: 7px 13px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
+    }
+    .preview-dock.hidden + .show-dock-btn { display: block; }
+  </style>
+</head>
+<body>
+  <div class="stage-wrapper" id="stageWrapper">
+    <canvas id="riverCanvas" width="720" height="1280"></canvas>
+    <div class="ambient-flash" id="ambientFlash"></div>
+
+    <!-- Thẻ vinh danh trung tâm dành riêng cho Siêu Quà 500+ xu và 2000+ xu -->
+    <div class="grand-ceremony-card" id="ceremonyCard">
+      <div class="ceremony-crown" id="ceremonyCrown">✦ CỰC QUANG NGÂN HÀ · 500 XU ✦</div>
+      <div class="ceremony-user" id="ceremonyUser">Khánh Linh</div>
+      <div class="ceremony-coin-pill" id="ceremonyCoin">+500 XU TRI ÂN</div>
+      <div class="ceremony-wish" id="ceremonyWish">“Chúc mọi điều tốt đẹp nhất sẽ đến với tất cả chúng ta!”</div>
+    </div>
+
+    <div class="hud-layer">
+      <div class="top-bar">
+        <div class="brand-card">
+          <div class="brand-tag"><span class="dot"></span> HUYỀN ẢO ĐÊM TRĂNG</div>
+          <div class="brand-title">Cung Đàn Bên Sông</div>
+          <div class="brand-sub">Quà càng lớn — Không gian càng bùng nổ</div>
+        </div>
+
+        <div class="vip-box">
+          <div class="vip-title"><span>Bảng Tri Ân</span><span>💎</span></div>
+          <div class="vip-list" id="vipList"></div>
+        </div>
+      </div>
+
+      <div class="spotlight" id="spotlight">
+        <div class="spotlight-kicker" id="spotKicker">KHOẢNH KHẮC TỎA SÁNG</div>
+        <div class="spotlight-text" id="spotText">“Chúc đêm nay thật bình yên và nhẹ nhõm.”</div>
+        <div class="spotlight-by" id="spotBy">— Lan Khuê</div>
+      </div>
+
+      <div class="bottom-bar">
+        <div class="guide-chip">
+          <span>Cmt: <b>Đèn Giấy</b></span>
+          <span>·</span>
+          <span>1 xu: <b>Sen</b></span>
+          <span>·</span>
+          <span>20 xu: <b>Đèn Trời</b></span>
+          <span>·</span>
+          <span>100 xu: <b>Thuyền VIP</b></span>
+          <span>·</span>
+          <span>500+ xu: <b>Ngân Hà</b></span>
+          <span>·</span>
+          <span>2000+ xu: <b>Rồng Vàng</b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bảng điều khiển giả lập 6 tầng Gift -->
+  <div class="preview-dock" id="previewDock">
+    <div class="dock-head">
+      <span class="dock-title">Test 6 Tầng Gift</span>
+      <span class="dock-sub">Phím [H] ẩn</span>
+    </div>
+    <div class="dock-row-inputs">
+      <input type="text" class="dock-input name" id="userInput" placeholder="Tên người..." maxlength="18" />
+      <input type="text" class="dock-input" id="wishInput" placeholder="Lời chúc..." maxlength="55" />
+    </div>
+    <div class="dock-grid">
+      <button class="dock-btn" onclick="triggerTier(0)">Tầng 1 · Bình luận<span>0 xu · Đèn giấy</span></button>
+      <button class="dock-btn" onclick="triggerTier(1)">Tầng 2 · Hoa Sen<span>1–19 xu · Sen hồng</span></button>
+      <button class="dock-btn" onclick="triggerTier(2)">Tầng 3 · Đèn Trời<span>20–99 xu · Bay lên trời</span></button>
+      <button class="dock-btn tier4" onclick="triggerTier(3)">Tầng 4 · Thuyền VIP<span>100–499 xu · 3 pháo hoa</span></button>
+      <button class="dock-btn tier5" onclick="triggerTier(4)">✦ Tầng 5 · CỰC QUANG NGÂN HÀ (500–1.999 xu)<span>Mưa 10 đèn trời + Cực quang + Bảng Kim Cương</span></button>
+      <button class="dock-btn tier6" onclick="triggerTier(5)">👑 Tầng 6 · RỒNG VÀNG GIÁNG THẾ (2.000+ xu)<span>Rồng ánh sáng bay lượn + Đại lễ pháo hoa + Rung màn hình</span></button>
+    </div>
+  </div>
+  <button class="show-dock-btn" id="showDockBtn" onclick="toggleDock(false)">Hiện bảng thử</button>
+
+  <script>
+    const canvas = document.getElementById('riverCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    const DEMOS = [
+      { name: 'Khánh Linh', wish: 'Chúc mọi điều tốt đẹp nhất sẽ đến với tất cả chúng ta!' },
+      { name: 'Minh Triết', wish: 'Mong đêm nay thật bình yên, vạn sự hanh thông.' },
+      { name: 'Lan Khuê', wish: 'Gửi ngàn lời chúc an lành tới gia đình mọi người.' },
+      { name: 'Hoàng Long', wish: 'Rực rỡ thành công, sức khỏe dồi dào, tâm luôn an!' },
+      { name: 'Thùy Dương', wish: 'Chúc ai đang mệt mỏi sẽ tìm thấy sự nhẹ nhõm đêm nay.' }
+    ];
+
+    const vipData = [
+      { name: 'Minh Triết', coins: 280, diamond: false },
+      { name: 'Lan Khuê', coins: 150, diamond: false },
+      { name: 'Thùy Dương', coins: 85, diamond: false }
+    ];
+
+    function updateVip(name, addCoins) {
+      if (addCoins <= 0) return;
+      const found = vipData.find(v => v.name.toLowerCase() === name.toLowerCase());
+      if (found) {
+        found.coins += addCoins;
+        if (found.coins >= 500) found.diamond = true;
+      } else {
+        vipData.push({ name, coins: addCoins, diamond: addCoins >= 500 });
+      }
+      vipData.sort((a, b) => b.coins - a.coins);
+      if (vipData.length > 3) vipData.length = 3;
+      renderVip();
+    }
+
+    function renderVip() {
+      document.getElementById('vipList').innerHTML = vipData.map((v, i) => `
+        <div class="vip-row ${v.diamond ? 'diamond' : ''}">
+          <div class="vip-badge">${v.diamond ? '💎' : i + 1}</div>
+          <div class="vip-name">${esc(v.name)}</div>
+          <div class="vip-coin">${v.coins.toLocaleString('vi-VN')} xu</div>
+        </div>
+      `).join('');
+    }
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    const stars = Array.from({ length: 95 }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * (H * 0.44),
+      r: Math.random() * 1.8 + 0.4,
+      p: Math.random() * Math.PI * 2,
+      s: Math.random() * 0.03 + 0.01
+    }));
+
+    const lanterns = [];
+    const skyLanterns = [];
+    const sparkles = [];
+    const ripples = [];
+    const fireworkRockets = [];
+
+    let royalVessel = null;
+    let auroraTimer = 0;       // Tầng 5: Cực quang ngân hà (500+ xu)
+    let imperialTimer = 0;     // Tầng 6: Rồng vàng giáng thế (2000+ xu)
+    let dragonProgress = 0;
+    let dragonActive = false;
+    let shakeFrames = 0;
+    let spotTimer = null;
+    let ceremonyTimer = null;
+
+    function showSpot(kicker, text, by) {
+      const el = document.getElementById('spotlight');
+      document.getElementById('spotKicker').textContent = kicker;
+      document.getElementById('spotText').textContent = `“${text}”`;
+      document.getElementById('spotBy').textContent = `— ${by}`;
+      el.classList.add('active');
+      clearTimeout(spotTimer);
+      spotTimer = setTimeout(() => el.classList.remove('active'), 5000);
+    }
+
+    function showCeremony(crown, user, coinLabel, wish, isImperial = false) {
+      const card = document.getElementById('ceremonyCard');
+      card.classList.toggle('imperial', isImperial);
+      document.getElementById('ceremonyCrown').textContent = crown;
+      document.getElementById('ceremonyUser').textContent = user;
+      document.getElementById('ceremonyCoin').textContent = coinLabel;
+      document.getElementById('ceremonyWish').textContent = `“${wish}”`;
+      card.classList.add('active');
+      clearTimeout(ceremonyTimer);
+      ceremonyTimer = setTimeout(() => card.classList.remove('active'), isImperial ? 9500 : 7500);
+    }
+
+    function flashScreen(bgCss, duration = 450) {
+      const el = document.getElementById('ambientFlash');
+      el.style.background = bgCss;
+      el.style.opacity = '1';
+      setTimeout(() => { el.style.opacity = '0'; }, duration);
+    }
+
+    function spawnSparkles(x, y, count, palette, speedScale = 1) {
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.35;
+        const speed = (1.2 + Math.random() * 3.8) * speedScale;
+        sparkles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 0.65,
+          r: Math.random() * 2.9 + 1.2,
+          color: palette[i % palette.length],
+          alpha: 1,
+          decay: 0.011 + Math.random() * 0.011
+        });
+      }
+    }
+
+    function launchFirework(targetX, targetY, palette, count = 42, speedScale = 1.15) {
+      fireworkRockets.push({
+        x: targetX + (Math.random() - 0.5) * 60,
+        y: H * 0.68,
+        tx: targetX,
+        ty: targetY,
+        vy: -11 - Math.random() * 3,
+        palette,
+        count,
+        speedScale
+      });
+    }
+
+    function addLantern(tier, user, wish) {
+      const w = (wish || 'Chúc đêm an lành và nhiều niềm vui.').trim();
+      const shortW = w.length > 40 ? w.slice(0, 40) + '…' : w;
+      const x = 125 + Math.random() * (W - 250);
+      const y = H * 0.84 + Math.random() * 58;
+      const isSmall = tier === 'small';
+
+      lanterns.push({
+        tier, user, wish: shortW,
+        x, y, baseX: x,
+        phase: Math.random() * Math.PI * 2,
+        vy: isSmall ? -0.35 : -0.48,
+        scale: isSmall ? 1.28 : 1.0,
+        alpha: 0, life: 0,
+        maxLife: isSmall ? 1350 : 1000
+      });
+
+      ripples.push({
+        x, y, r: 8, maxR: isSmall ? 92 : 62,
+        alpha: 0.75,
+        color: isSmall ? 'rgba(244, 114, 182, 0.6)' : 'rgba(251, 191, 36, 0.45)'
+      });
+
+      if (isSmall) {
+        spawnSparkles(x, y, 18, ['#f472b6', '#fbcfe8', '#fde047']);
+        showSpot('HOA SEN HỒNG · QUÀ 1 XU', shortW, user);
+      }
+    }
+
+    function addSkyLantern(user, wish, startX = null, delayY = 0) {
+      const w = (wish || 'Bay cao mọi ước mơ và bình an.').trim();
+      const shortW = w.length > 42 ? w.slice(0, 42) + '…' : w;
+      const x = startX !== null ? startX : (145 + Math.random() * (W - 290));
+      const y = H * 0.72 + delayY;
+
+      skyLanterns.push({
+        x, y, baseX: x,
+        phase: Math.random() * Math.PI * 2,
+        vy: -1.35 - Math.random() * 0.35,
+        alpha: 0,
+        user, wish: shortW
+      });
+    }
+
+    // Tầng 4: 100 - 499 xu
+    function triggerTier4(user, wish) {
+      const shortW = wish.length > 46 ? wish.slice(0, 46) + '…' : wish;
+      flashScreen('radial-gradient(circle at 50% 48%, rgba(251, 191, 36, 0.32), rgba(56, 189, 248, 0.14) 50%, transparent 78%)', 450);
+      launchFirework(W * 0.28, H * 0.28, ['#fbbf24', '#38bdf8', '#ffffff'], 38, 1.1);
+      launchFirework(W * 0.72, H * 0.26, ['#f472b6', '#fde047', '#ffffff'], 38, 1.1);
+      addSkyLantern(user, shortW, W * 0.5, 0);
+      royalVessel = { x: -195, y: H * 0.63, vx: 1.9, phase: 0, user, wish: shortW, imperial: false };
+      showSpot('✦ THUYỀN HOA ĐĂNG VIP · 100 XU ✦', shortW, user);
+    }
+
+    // Tầng 5: 500 - 1.999 xu (Cực Quang Ngân Hà & Mưa 10 Đèn Trời)
+    function triggerTier5(user, wish) {
+      const shortW = wish.length > 52 ? wish.slice(0, 52) + '…' : wish;
+      auroraTimer = 680;
+      shakeFrames = 18;
+      flashScreen('radial-gradient(circle at 50% 40%, rgba(167, 139, 250, 0.45), rgba(56, 189, 248, 0.25) 55%, transparent 82%)', 700);
+
+      // Mưa 10 đèn trời đồng loạt
+      for (let i = 0; i < 10; i++) {
+        const lx = 85 + (i % 5) * 135 + (Math.random() - 0.5) * 30;
+        addSkyLantern(i === 2 ? user : '', i === 2 ? shortW : '', lx, Math.floor(i / 5) * 65);
+      }
+
+      // 5 loạt pháo hoa ngân hà
+      [0.2, 0.35, 0.5, 0.65, 0.8].forEach((rx, idx) => {
+        setTimeout(() => {
+          launchFirework(W * rx, H * (0.20 + (idx % 2) * 0.08), ['#a78bfa', '#38bdf8', '#fde047', '#f472b6'], 50, 1.25);
+        }, idx * 260);
+      });
+
+      royalVessel = { x: -210, y: H * 0.63, vx: 1.75, phase: 0, user, wish: shortW, imperial: false };
+      showCeremony('💎 CỰC QUANG NGÂN HÀ · 500 XU 💎', user, '+500 XU · KIM CƯƠNG TRI ÂN', shortW, false);
+    }
+
+    // Tầng 6: 2.000+ xu (Rồng Vàng Giáng Thế & Đại Lễ Hoàng Kim)
+    function triggerTier6(user, wish) {
+      const shortW = wish.length > 55 ? wish.slice(0, 55) + '…' : wish;
+      imperialTimer = 900;
+      auroraTimer = 900;
+      dragonActive = true;
+      dragonProgress = 0;
+      shakeFrames = 36;
+
+      flashScreen('radial-gradient(circle at 50% 45%, rgba(253, 224, 71, 0.62), rgba(244, 63, 94, 0.28) 55%, transparent 85%)', 900);
+
+      // Mưa hoa đăng phủ kín mặt sông + 14 đèn trời
+      for (let i = 0; i < 8; i++) {
+        setTimeout(() => addLantern('small', user, shortW), i * 160);
+      }
+      for (let i = 0; i < 14; i++) {
+        const lx = 70 + (i % 7) * 96;
+        addSkyLantern('', '', lx, Math.floor(i / 7) * 75);
+      }
+
+      // Pháo hoa đại lễ 8 đợt liên hoàn
+      for (let wave = 0; wave < 8; wave++) {
+        setTimeout(() => {
+          const rx = 0.18 + Math.random() * 0.64;
+          const ry = 0.16 + Math.random() * 0.18;
+          launchFirework(W * rx, H * ry, ['#fde047', '#fbbf24', '#fb7185', '#38bdf8', '#ffffff'], 64, 1.4);
+        }, wave * 340);
+      }
+
+      royalVessel = { x: -230, y: H * 0.63, vx: 1.65, phase: 0, user, wish: shortW, imperial: true };
+      showCeremony('👑 RỒNG VÀNG GIÁNG THẾ · SIÊU QUÀ 👑', user, '+2.000 XU · ĐẠI LỄ HOÀNG KIM', shortW, true);
+    }
+
+    function triggerTier(tierIdx) {
+      const pick = DEMOS[Math.floor(Math.random() * DEMOS.length)];
+      const customUser = document.getElementById('userInput').value.trim();
+      const customWish = document.getElementById('wishInput').value.trim();
+      const user = customUser || pick.name;
+      const wish = customWish || pick.wish;
+
+      if (tierIdx === 0) {
+        addLantern('normal', user, wish);
+      } else if (tierIdx === 1) {
+        updateVip(user, 1);
+        addLantern('small', user, wish);
+      } else if (tierIdx === 2) {
+        updateVip(user, 20);
+        addSkyLantern(user, wish);
+        spawnSparkles(W * 0.5, H * 0.68, 26, ['#fbbf24', '#38bdf8', '#fffbeb']);
+        showSpot('ĐÈN KHỔNG MINH · 20 XU', wish, user);
+      } else if (tierIdx === 3) {
+        updateVip(user, 100);
+        triggerTier4(user, wish);
+      } else if (tierIdx === 4) {
+        updateVip(user, 500);
+        triggerTier5(user, wish);
+      } else if (tierIdx === 5) {
+        updateVip(user, 2000);
+        triggerTier6(user, wish);
+      }
+    }
+
+    function toggleDock(force) {
+      const d = document.getElementById('previewDock');
+      if (typeof force === 'boolean') d.classList.toggle('hidden', force);
+      else d.classList.toggle('hidden');
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'h' && document.activeElement.tagName !== 'INPUT') toggleDock();
+    });
+
+    function drawBackground(t) {
+      const g = ctx.createLinearGradient(0, 0, 0, H * 0.45);
+      if (imperialTimer > 0) {
+        g.addColorStop(0, '#1c0b24');
+        g.addColorStop(0.55, '#3b1534');
+        g.addColorStop(1, '#59252c');
+      } else if (auroraTimer > 0) {
+        g.addColorStop(0, '#071329');
+        g.addColorStop(0.55, '#13244a');
+        g.addColorStop(1, '#251d52');
+      } else {
+        g.addColorStop(0, '#050410');
+        g.addColorStop(0.6, '#0c0b24');
+        g.addColorStop(1, '#161438');
+      }
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H * 0.46);
+
+      // Dải cực quang / ngân hà lượn sóng (Tầng 5 & 6)
+      if (auroraTimer > 0) {
+        const aAlpha = Math.min(0.42, auroraTimer / 180);
+        for (let band = 0; band < 3; band++) {
+          ctx.save();
+          ctx.globalAlpha = aAlpha * (1 - band * 0.22);
+          const ag = ctx.createLinearGradient(0, H * 0.08, W, H * 0.34);
+          if (imperialTimer > 0) {
+            ag.addColorStop(0, 'rgba(253, 224, 71, 0)');
+            ag.addColorStop(0.35, 'rgba(251, 191, 36, 0.55)');
+            ag.addColorStop(0.7, 'rgba(244, 114, 182, 0.5)');
+            ag.addColorStop(1, 'rgba(56, 189, 248, 0)');
+          } else {
+            ag.addColorStop(0, 'rgba(56, 189, 248, 0)');
+            ag.addColorStop(0.35, 'rgba(52, 211, 153, 0.5)');
+            ag.addColorStop(0.7, 'rgba(167, 139, 250, 0.55)');
+            ag.addColorStop(1, 'rgba(244, 114, 182, 0)');
+          }
+          ctx.fillStyle = ag;
+          ctx.beginPath();
+          ctx.moveTo(0, H * 0.34);
+          for (let x = 0; x <= W; x += 40) {
+            const y = H * (0.14 + band * 0.04) + Math.sin(x * 0.008 + t * 0.002 + band) * 28;
+            ctx.lineTo(x, y);
+          }
+          ctx.lineTo(W, H * 0.38);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // Sao trời
+      stars.forEach(s => {
+        s.p += s.s;
+        const a = 0.25 + 0.72 * (0.5 + 0.5 * Math.sin(s.p));
+        ctx.fillStyle = `rgba(255, 250, 235, ${a.toFixed(2)})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Vầng trăng & hào quang
+      const mx = W * 0.5, my = H * 0.20;
+      const haloR = imperialTimer > 0 ? 270 : (auroraTimer > 0 ? 225 : 175);
+      const halo = ctx.createRadialGradient(mx, my, 18, mx, my, haloR);
+      halo.addColorStop(0, imperialTimer > 0 ? 'rgba(253, 224, 71, 0.62)' : 'rgba(251, 191, 36, 0.35)');
+      halo.addColorStop(0.5, 'rgba(167, 139, 250, 0.16)');
+      halo.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(mx, my, haloR, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fff9e6';
+      ctx.beginPath();
+      ctx.arc(mx, my, imperialTimer > 0 ? 48 : 42, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Dãy núi mờ
+      ctx.fillStyle = '#09081b';
+      ctx.beginPath();
+      ctx.moveTo(0, H * 0.42);
+      ctx.lineTo(0, H * 0.35);
+      ctx.quadraticCurveTo(W * 0.25, H * 0.295, W * 0.5, H * 0.35);
+      ctx.quadraticCurveTo(W * 0.76, H * 0.285, W, H * 0.345);
+      ctx.lineTo(W, H * 0.42);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Rồng ánh sáng hoàng kim bay lượn quanh trăng (Tầng 6 - 2.000+ xu)
+    function drawGoldenDragon(t) {
+      if (!dragonActive) return;
+      dragonProgress += 0.0042;
+      if (dragonProgress >= 1.25) {
+        dragonActive = false;
+        return;
+      }
+
+      const segments = 46;
+      ctx.save();
+      for (let i = 0; i < segments; i++) {
+        const p = dragonProgress - i * 0.0085;
+        if (p < 0 || p > 1.15) continue;
+
+        // Quỹ đạo uốn lượn hình số 8 / sóng lượn từ dưới sông vút lên quanh mặt trăng
+        const x = W * 0.5 + Math.sin(p * Math.PI * 3.2) * 255 * Math.sin(Math.min(1, p) * Math.PI * 0.85);
+        const y = H * 0.66 - p * (H * 0.52) + Math.cos(p * Math.PI * 4) * 34;
+
+        const ratio = 1 - i / segments;
+        const radius = (i === 0 ? 15 : 12 * ratio + 2);
+
+        const glow = ctx.createRadialGradient(x, y, 1, x, y, radius * 2.8);
+        glow.addColorStop(0, 'rgba(255, 251, 235, 0.95)');
+        glow.addColorStop(0.4, 'rgba(253, 224, 71, 0.72)');
+        glow.addColorStop(1, 'rgba(245, 158, 11, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, radius * 2.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (i % 4 === 0 && Math.random() < 0.45) {
+          sparkles.push({
+            x, y,
+            vx: (Math.random() - 0.5) * 1.6,
+            vy: (Math.random() - 0.5) * 1.6,
+            r: 2.2,
+            color: '#fde047',
+            alpha: 0.95,
+            decay: 0.024
+          });
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawRiver(t) {
+      const top = H * 0.40;
+      const wg = ctx.createLinearGradient(0, top, 0, H);
+      wg.addColorStop(0, imperialTimer > 0 ? '#2b1228' : (auroraTimer > 0 ? '#141e42' : '#0d142e'));
+      wg.addColorStop(0.5, '#080c20');
+      wg.addColorStop(1, '#040612');
+      ctx.fillStyle = wg;
+      ctx.fillRect(0, top, W, H - top);
+
+      for (let i = 0; i < 24; i++) {
+        const py = top + 18 + i * 28 + Math.sin(t * 0.0016 + i) * 4;
+        const w = 36 + Math.sin(t * 0.002 + i * 0.7) * 18 + (i / 24) * 58;
+        const px = W * 0.5 - w * 0.5 + Math.cos(t * 0.0013 + i) * 14;
+        const a = Math.max(0.05, (imperialTimer > 0 ? 0.42 : (auroraTimer > 0 ? 0.34 : 0.24)) - i * 0.007);
+        ctx.fillStyle = `rgba(253, 230, 138, ${a.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.roundRect(px, py, w, 3.2, 2);
+        ctx.fill();
+      }
+    }
+
+    function drawRipples() {
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const r = ripples[i];
+        r.r += 0.65;
+        r.alpha -= 0.0065;
+        if (r.alpha <= 0 || r.r > r.maxR) { ripples.splice(i, 1); continue; }
+        ctx.save();
+        ctx.strokeStyle = r.color;
+        ctx.globalAlpha = Math.max(0, r.alpha);
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.ellipse(r.x, r.y, r.r * 1.45, r.r * 0.45, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function drawLanterns(t) {
+      for (let i = lanterns.length - 1; i >= 0; i--) {
+        const l = lanterns[i];
+        l.life++;
+        l.phase += 0.022;
+        l.y += l.vy;
+        l.x = l.baseX + Math.sin(l.phase) * 18;
+        if (l.life < 55) l.alpha = l.life / 55;
+        else if (l.life > l.maxLife - 85) l.alpha = Math.max(0, (l.maxLife - l.life) / 85);
+        else l.alpha = 1;
+
+        if (l.life >= l.maxLife || l.y < H * 0.39) { lanterns.splice(i, 1); continue; }
+
+        const isSmall = l.tier === 'small';
+        ctx.save();
+        ctx.globalAlpha = l.alpha;
+        ctx.translate(l.x, l.y);
+        ctx.scale(l.scale, l.scale);
+
+        const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 58);
+        glow.addColorStop(0, isSmall ? 'rgba(244, 114, 182, 0.38)' : 'rgba(251, 191, 36, 0.32)');
+        glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, 0, 58, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = isSmall ? '#f472b6' : '#fbbf24';
+        ctx.beginPath();
+        ctx.moveTo(-20, 0); ctx.lineTo(20, 0); ctx.lineTo(13, 13); ctx.lineTo(-13, 13);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#fffbeb';
+        ctx.beginPath();
+        ctx.arc(0, 3, 6 * (0.85 + 0.15 * Math.sin(t * 0.012 + l.phase)), 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = '600 11.5px "Be Vietnam Pro", sans-serif';
+        const nw = ctx.measureText(l.user).width;
+        ctx.font = '400 12px "Be Vietnam Pro", sans-serif';
+        const ww = ctx.measureText(l.wish).width;
+        const bw = Math.min(276, Math.max(112, Math.max(nw, ww) + 22));
+        const by = -52;
+
+        ctx.fillStyle = 'rgba(10, 9, 24, 0.8)';
+        ctx.strokeStyle = isSmall ? 'rgba(244, 114, 182, 0.5)' : 'rgba(251, 191, 36, 0.38)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(-bw / 2, by, bw, 39, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = isSmall ? '#f9a8d4' : '#fde047';
+        ctx.font = '600 11.5px "Be Vietnam Pro", sans-serif';
+        ctx.fillText(l.user, 0, by + 15);
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '400 11.8px "Be Vietnam Pro", sans-serif';
+        ctx.fillText(l.wish, 0, by + 30);
+
+        ctx.restore();
+      }
+    }
+
+    function drawSkyLanterns() {
+      for (let i = skyLanterns.length - 1; i >= 0; i--) {
+        const s = skyLanterns[i];
+        s.y += s.vy;
+        s.phase += 0.026;
+        s.x = s.baseX + Math.sin(s.phase) * 22;
+        s.alpha = Math.min(1, s.alpha + 0.035);
+        if (s.y < H * 0.24) s.alpha -= 0.016;
+        if (s.alpha <= 0 || s.y < 105) { skyLanterns.splice(i, 1); continue; }
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, s.alpha);
+        ctx.translate(s.x, s.y);
+
+        const g = ctx.createRadialGradient(0, 0, 6, 0, 0, 78);
+        g.addColorStop(0, 'rgba(251, 191, 36, 0.46)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(0, 0, 78, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.moveTo(-15, -18); ctx.lineTo(15, -18); ctx.lineTo(23, 8); ctx.lineTo(-23, 8);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#fffbeb';
+        ctx.beginPath();
+        ctx.arc(0, -2, 8.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (s.user) {
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#fde68a';
+          ctx.font = '600 12px "Be Vietnam Pro", sans-serif';
+          ctx.fillText(s.user, 0, 26);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '400 12px "Be Vietnam Pro", sans-serif';
+          ctx.fillText(s.wish, 0, 42);
+        }
+
+        ctx.restore();
+      }
+    }
+
+    function drawRoyalVessel() {
+      if (!royalVessel) return;
+      royalVessel.x += royalVessel.vx;
+      royalVessel.phase += 0.035;
+      const by = royalVessel.y + Math.sin(royalVessel.phase) * 6;
+      if (royalVessel.x > W + 240) { royalVessel = null; return; }
+
+      ctx.save();
+      ctx.translate(royalVessel.x, by);
+      if (royalVessel.imperial) ctx.scale(1.22, 1.22);
+
+      const aura = ctx.createRadialGradient(0, 0, 14, 0, 0, 145);
+      aura.addColorStop(0, royalVessel.imperial ? 'rgba(253, 224, 71, 0.6)' : 'rgba(251, 191, 36, 0.45)');
+      aura.addColorStop(0.55, 'rgba(56, 189, 248, 0.2)');
+      aura.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = aura;
+      ctx.beginPath();
+      ctx.arc(0, 0, 145, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = royalVessel.imperial ? '#fde047' : '#fbbf24';
+      ctx.beginPath();
+      ctx.moveTo(-78, 6); ctx.quadraticCurveTo(0, 30, 78, 6); ctx.lineTo(56, -5); ctx.lineTo(-56, -5);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#fffbeb';
+      ctx.beginPath();
+      ctx.roundRect(-30, -28, 60, 23, 7);
+      ctx.fill();
+
+      ctx.fillStyle = '#1e1b4b';
+      ctx.textAlign = 'center';
+      ctx.font = '800 10px "Be Vietnam Pro", sans-serif';
+      ctx.fillText(royalVessel.imperial ? '👑 HOÀNG KIM' : '✦ ĐẠI LỄ ✦', 0, -13);
+
+      ctx.fillStyle = 'rgba(12, 10, 28, 0.9)';
+      ctx.strokeStyle = 'rgba(253, 224, 71, 0.85)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.roundRect(-134, -70, 268, 37, 11);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#fde047';
+      ctx.font = '700 12px "Be Vietnam Pro", sans-serif';
+      ctx.fillText(royalVessel.user, 0, -54);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '400 11.5px "Be Vietnam Pro", sans-serif';
+      ctx.fillText(royalVessel.wish, 0, -39);
+
+      ctx.restore();
+    }
+
+    function drawRocketsAndSparkles() {
+      for (let i = fireworkRockets.length - 1; i >= 0; i--) {
+        const rk = fireworkRockets[i];
+        rk.y += rk.vy;
+        rk.x += (rk.tx - rk.x) * 0.06;
+
+        ctx.fillStyle = '#fef08a';
+        ctx.beginPath();
+        ctx.arc(rk.x, rk.y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (rk.y <= rk.ty) {
+          spawnSparkles(rk.x, rk.y, rk.count, rk.palette, rk.speedScale);
+          fireworkRockets.splice(i, 1);
+        }
+      }
+
+      for (let i = sparkles.length - 1; i >= 0; i--) {
+        const sp = sparkles[i];
+        sp.x += sp.vx;
+        sp.y += sp.vy;
+        sp.vy += 0.032;
+        sp.alpha -= sp.decay;
+        if (sp.alpha <= 0) { sparkles.splice(i, 1); continue; }
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, sp.alpha);
+        ctx.fillStyle = sp.color;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function loop(t) {
+      if (auroraTimer > 0) auroraTimer--;
+      if (imperialTimer > 0) imperialTimer--;
+
+      ctx.save();
+      if (shakeFrames > 0) {
+        shakeFrames--;
+        const sx = (Math.random() - 0.5) * 7;
+        const sy = (Math.random() - 0.5) * 7;
+        ctx.translate(sx, sy);
+      }
+
+      ctx.clearRect(-20, -20, W + 40, H + 40);
+      drawBackground(t);
+      drawGoldenDragon(t);
+      drawRiver(t);
+      drawRipples();
+      drawLanterns(t);
+      drawSkyLanterns();
+      drawRoyalVessel();
+      drawRocketsAndSparkles();
+      ctx.restore();
+
+      requestAnimationFrame(loop);
+    }
+
+    renderVip();
+    addLantern('normal', 'Lan Khuê', 'Chúc mọi điều tốt đẹp nhất sẽ đến với bạn.');
+    setTimeout(() => addLantern('small', 'Minh Triết', 'Mong đêm nay thật bình yên và nhẹ nhõm.'), 850);
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Option 3 — Đêm Hội Lồng Đèn (Ấm Áp & Bùng Nổ Quà Lớn)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #120608;
+      --gold: #fcd34d;
+      --crimson: #fb7185;
+      --amber: #fb923c;
+      --glass: rgba(24, 9, 12, 0.62);
+      --border: rgba(252, 211, 77, 0.25);
+      --text: #fff7ed;
+      --muted: rgba(254, 215, 170, 0.72);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: #080204;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      color: var(--text);
+    }
+
+    .stage-wrapper {
+      position: relative;
+      width: min(100vw, calc(100vh * 9 / 16));
+      height: min(100vh, calc(100vw * 16 / 9));
+      aspect-ratio: 9 / 16;
+      background: var(--bg-deep);
+      box-shadow: 0 0 90px rgba(0, 0, 0, 0.95);
+      overflow: hidden;
+    }
+
+    canvas#riverCanvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      display: block; z-index: 1;
+    }
+
+    .hud-layer {
+      position: absolute; inset: 0; z-index: 5;
+      pointer-events: none;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 26px 18px 24px 18px;
+    }
+
+    .top-bar { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+
+    .brand-card {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 10px 15px;
+    }
+
+    .brand-tag {
+      font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--gold); font-weight: 700; display: flex; align-items: center; gap: 6px;
+    }
+
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #fbbf24; box-shadow: 0 0 10px #fbbf24;
+    }
+
+    .brand-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 23px; font-weight: 600; color: #fffbeb; line-height: 1.1; margin-top: 2px;
+    }
+
+    .brand-sub { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+
+    .vip-box {
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(251, 146, 60, 0.32);
+      border-radius: 18px;
+      padding: 10px 13px;
+      min-width: 144px; max-width: 178px;
+    }
+
+    .vip-title {
+      font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--amber); font-weight: 700; margin-bottom: 7px;
+      display: flex; justify-content: space-between;
+    }
+
+    .vip-list { display: flex; flex-direction: column; gap: 5px; }
+
+    .vip-row {
+      display: flex; align-items: center; gap: 7px; font-size: 11px;
+      background: rgba(255, 255, 255, 0.04); padding: 4px 7px; border-radius: 9px;
+    }
+
+    .vip-badge {
+      width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center;
+      font-size: 9.5px; font-weight: 700; background: rgba(251, 146, 60, 0.25); color: #fed7aa;
+    }
+
+    .vip-row:nth-child(1) .vip-badge {
+      background: linear-gradient(135deg, #fef08a, #ef4444); color: #1c1917;
+    }
+
+    .vip-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+    .vip-coin { font-size: 10px; color: var(--gold); font-weight: 600; }
+
+    .spotlight {
+      align-self: center;
+      max-width: 92%;
+      background: linear-gradient(135deg, rgba(44, 12, 16, 0.9), rgba(62, 24, 12, 0.9));
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(252, 211, 77, 0.6);
+      border-radius: 22px;
+      padding: 12px 20px;
+      text-align: center;
+      box-shadow: 0 14px 42px rgba(0, 0, 0, 0.65), 0 0 34px rgba(251, 146, 60, 0.28);
+      opacity: 0; transform: translateY(-10px) scale(0.96);
+      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .spotlight.active { opacity: 1; transform: translateY(0) scale(1); }
+    .spotlight-kicker { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 3px; }
+    .spotlight-text { font-family: 'Cormorant Garamond', serif; font-size: 21px; font-style: italic; color: #ffffff; line-height: 1.25; }
+    .spotlight-by { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    .bottom-bar { display: flex; justify-content: center; margin-bottom: 4px; }
+    .guide-chip {
+      background: rgba(18, 7, 10, 0.76); backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 999px;
+      padding: 6px 15px; font-size: 11px; color: rgba(255, 247, 237, 0.92);
+      display: flex; gap: 8px; align-items: center;
+    }
+    .guide-chip b { color: var(--gold); font-weight: 600; }
+
+    .preview-dock {
+      position: fixed; right: 18px; bottom: 18px; z-index: 50; width: 254px;
+      background: rgba(22, 10, 14, 0.92); backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 16px;
+      padding: 12px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); font-size: 11.5px;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .preview-dock.hidden { opacity: 0; pointer-events: none; transform: translateY(10px); }
+    .dock-head { display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .dock-title { color: var(--gold); font-weight: 700; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .dock-sub { color: var(--muted); font-size: 10px; }
+    .dock-input {
+      width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 9px; padding: 7px 9px; color: #fff; font-family: inherit; font-size: 11.5px;
+      outline: none; margin-bottom: 8px;
+    }
+    .dock-input:focus { border-color: var(--gold); }
+    .dock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .dock-btn {
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      color: #fff; border-radius: 9px; padding: 7px 8px; font-family: inherit;
+      font-size: 10.8px; font-weight: 500; cursor: pointer; transition: 0.16s ease;
+    }
+    .dock-btn:hover { background: rgba(252, 211, 77, 0.2); border-color: rgba(252, 211, 77, 0.5); }
+    .dock-btn.burst {
+      grid-column: span 2;
+      background: linear-gradient(135deg, rgba(251, 146, 60, 0.34), rgba(252, 211, 77, 0.28));
+      border-color: rgba(252, 211, 77, 0.7); font-weight: 700; color: #fffbeb;
+    }
+    .show-dock-btn {
+      position: fixed; right: 18px; bottom: 18px; z-index: 49; display: none;
+      background: rgba(22, 10, 14, 0.9); color: var(--gold); border: 1px solid rgba(252, 211, 77, 0.45);
+      border-radius: 999px; padding: 7px 13px; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer;
+    }
+    .preview-dock.hidden + .show-dock-btn { display: block; }
+  </style>
+</head>
+<body>
+  <div class="stage-wrapper">
+    <canvas id="riverCanvas" width="720" height="1280"></canvas>
+
+    <div class="hud-layer">
+      <div class="top-bar">
+        <div class="brand-card">
+          <div class="brand-tag"><span class="dot"></span> ĐÊM HỘI LỒNG ĐÈN</div>
+          <div class="brand-title">Bến Đèn Rực Lửa</div>
+          <div class="brand-sub">Tặng quà càng cao — Hội đèn càng rực</div>
+        </div>
+
+        <div class="vip-box">
+          <div class="vip-title"><span>Bảng Tri Ân</span><span>✦</span></div>
+          <div class="vip-list" id="vipList"></div>
+        </div>
+      </div>
+
+      <div class="spotlight" id="spotlight">
+        <div class="spotlight-kicker" id="spotKicker">LỜI CHÚC RỰC RỠ</div>
+        <div class="spotlight-text" id="spotText">“Chúc bạn một năm rực rỡ và tràn đầy niềm vui.”</div>
+        <div class="spotlight-by" id="spotBy">— Thanh Hà</div>
+      </div>
+
+      <div class="bottom-bar">
+        <div class="guide-chip">
+          <span>Bình luận: <b>Đèn Vàng</b></span>
+          <span>·</span>
+          <span>1 xu: <b>Sen Đỏ</b></span>
+          <span>·</span>
+          <span>20+ xu: <b>Dàn Đèn Trời</b></span>
+          <span>·</span>
+          <span>100+ xu: <b>Bão Đèn &amp; Pháo Hoa</b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-dock" id="previewDock">
+    <div class="dock-head">
+      <span class="dock-title">Option 3 · Hội Đèn</span>
+      <span class="dock-sub">[H] ẩn/hiện</span>
+    </div>
+    <input type="text" class="dock-input" id="wishInput" placeholder="Nhập lời chúc để test..." maxlength="55" />
+    <div class="dock-grid">
+      <button class="dock-btn" onclick="triggerEvent('comment')">+ Bình luận (0 xu)</button>
+      <button class="dock-btn" onclick="triggerEvent('small')">+ Sen Đỏ (1 xu)</button>
+      <button class="dock-btn" onclick="triggerEvent('medium')">+ Dàn Đèn Trời (20 xu)</button>
+      <button class="dock-btn" onclick="triggerEvent('heart')">+ Thả Tim</button>
+      <button class="dock-btn burst" onclick="triggerEvent('mega')">✦ BÃO ĐÈN &amp; PHÁO HOA (100+ xu)</button>
+    </div>
+  </div>
+  <button class="show-dock-btn" id="showDockBtn" onclick="toggleDock(false)">Hiện bảng thử</button>
+
+  <script>
+    const canvas = document.getElementById('riverCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    const DEMOS = [
+      { name: 'Thanh Hà', wish: 'Chúc bạn một năm rực rỡ và tràn đầy niềm vui.' },
+      { name: 'Quốc Bảo', wish: 'Mong mọi tâm nguyện đều sớm hóa thành hiện thực.' },
+      { name: 'Mai Phương', wish: 'Chúc gia đình luôn đầm ấm, bình an.' },
+      { name: 'Việt Anh', wish: 'Đêm nay thật ấm áp và nhiều năng lượng lành.' }
+    ];
+
+    const VIP = [
+      { name: 'Hồng Nhung', coin: '680 xu' },
+      { name: 'Đức Thịnh', coin: '340 xu' },
+      { name: 'Ngọc Ánh', coin: '190 xu' }
+    ];
+
+    function renderVip() {
+      document.getElementById('vipList').innerHTML = VIP.map((v, i) => `
+        <div class="vip-row">
+          <div class="vip-badge">${i + 1}</div>
+          <div class="vip-name">${esc(v.name)}</div>
+          <div class="vip-coin">${esc(v.coin)}</div>
+        </div>
+      `).join('');
+    }
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    const lanterns = [];
+    const skyLanterns = [];
+    const fireworks = [];
+    let festivalTimer = 0;
+    let grandBoat = null;
+    let spotTimer = null;
+
+    function showSpot(kicker, text, by) {
+      const el = document.getElementById('spotlight');
+      document.getElementById('spotKicker').textContent = kicker;
+      document.getElementById('spotText').textContent = `“${text}”`;
+      document.getElementById('spotBy').textContent = `— ${by}`;
+      el.classList.add('active');
+      clearTimeout(spotTimer);
+      spotTimer = setTimeout(() => el.classList.remove('active'), 5500);
+    }
+
+    function launchFirework(cx, cy, count = 36) {
+      const cols = ['#fcd34d', '#fb7185', '#fb923c', '#fde047', '#ffffff'];
+      for (let i = 0; i < count; i++) {
+        const ang = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.25;
+        const spd = 1.4 + Math.random() * 4.2;
+        fireworks.push({
+          x: cx, y: cy,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 0.8,
+          r: Math.random() * 2.6 + 1.2,
+          color: cols[i % cols.length],
+          alpha: 1,
+          fade: 0.011 + Math.random() * 0.01
+        });
+      }
+    }
+
+    function addLantern(tier, user, wish) {
+      const w = (wish || 'Chúc đêm an lành và nhiều niềm vui.').trim();
+      const shortW = w.length > 40 ? w.slice(0, 40) + '…' : w;
+      const x = 135 + Math.random() * (W - 270);
+      const y = H * 0.84 + Math.random() * 55;
+      const isSmall = tier === 'small';
+
+      lanterns.push({
+        tier, user, wish: shortW,
+        x, y, baseX: x,
+        phase: Math.random() * Math.PI * 2,
+        vy: isSmall ? -0.35 : -0.48,
+        scale: isSmall ? 1.28 : 1.0,
+        alpha: 0, life: 0,
+        maxLife: isSmall ? 1350 : 1000
+      });
+
+      if (isSmall) {
+        launchFirework(x, y - 16, 18);
+        showSpot('SEN ĐỎ MAY MẮN · QUÀ 1 XU', shortW, user);
+      }
+    }
+
+    function addSkyLanternCluster(user, wish) {
+      const w = (wish || 'Bay cao mọi ước mơ và bình an.').trim();
+      const shortW = w.length > 42 ? w.slice(0, 42) + '…' : w;
+
+      [-75, 0, 75].forEach((offset, idx) => {
+        const x = W * 0.5 + offset + (Math.random() - 0.5) * 30;
+        const y = H * 0.68 + idx * 24;
+        skyLanterns.push({
+          x, y, baseX: x,
+          phase: idx * 1.1,
+          vy: -1.35 - idx * 0.12,
+          alpha: 0,
+          user: idx === 1 ? user : '',
+          wish: idx === 1 ? shortW : ''
+        });
+      });
+
+      launchFirework(W * 0.5, H * 0.34, 34);
+      showSpot('DÀN ĐÈN TRỜI · QUÀ TẦM TRUNG', shortW, user);
+    }
+
+    function triggerFestivalStorm(user, wish) {
+      const w = (wish || 'Bùng nổ phúc lộc, rạng rỡ muôn nơi!').trim();
+      const shortW = w.length > 46 ? w.slice(0, 46) + '…' : w;
+
+      festivalTimer = 460;
+      launchFirework(W * 0.25, H * 0.28, 45);
+      launchFirework(W * 0.50, H * 0.22, 55);
+      launchFirework(W * 0.75, H * 0.30, 45);
+
+      for (let i = 0; i < 6; i++) {
+        const lx = 120 + i * 95;
+        skyLanterns.push({
+          x: lx, y: H * 0.75 + (i % 2) * 35, baseX: lx,
+          phase: i * 0.8, vy: -1.55 - (i % 3) * 0.18,
+          alpha: 0, user: '', wish: ''
+        });
+      }
+
+      grandBoat = {
+        x: -200, y: H * 0.64, vx: 1.9, phase: 0, user, wish: shortW
+      };
+
+      showSpot('✦ BÃO ĐÈN & PHÁO HOA · QUÀ 100+ XU ✦', shortW, user);
+    }
+
+    function triggerEvent(type) {
+      const pick = DEMOS[Math.floor(Math.random() * DEMOS.length)];
+      const typed = document.getElementById('wishInput').value.trim();
+      const wish = typed || pick.wish;
+
+      if (type === 'comment') addLantern('normal', pick.name, wish);
+      else if (type === 'small') addLantern('small', pick.name, wish);
+      else if (type === 'medium') addSkyLanternCluster(pick.name, wish);
+      else if (type === 'heart') {
+        launchFirework(150 + Math.random() * (W - 300), H * 0.52 + Math.random() * 140, 14);
+      } else if (type === 'mega') triggerFestivalStorm(pick.name, wish);
+    }
+
+    function toggleDock(force) {
+      const d = document.getElementById('previewDock');
+      if (typeof force === 'boolean') d.classList.toggle('hidden', force);
+      else d.classList.toggle('hidden');
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'h' && document.activeElement.tagName !== 'INPUT') toggleDock();
+    });
+
+    function drawBg() {
+      const g = ctx.createLinearGradient(0, 0, 0, H * 0.45);
+      if (festivalTimer > 0) {
+        g.addColorStop(0, '#240810');
+        g.addColorStop(0.55, '#3f1116');
+        g.addColorStop(1, '#581c18');
+      } else {
+        g.addColorStop(0, '#110508');
+        g.addColorStop(0.6, '#220a0e');
+        g.addColorStop(1, '#341114');
+      }
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H * 0.46);
+
+      const mx = W * 0.5, my = H * 0.20;
+      const halo = ctx.createRadialGradient(mx, my, 16, mx, my, festivalTimer > 0 ? 225 : 165);
+      halo.addColorStop(0, 'rgba(252, 211, 77, 0.42)');
+      halo.addColorStop(0.55, 'rgba(251, 146, 60, 0.16)');
+      halo.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(mx, my, festivalTimer > 0 ? 225 : 165, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fffbeb';
+      ctx.beginPath();
+      ctx.arc(mx, my, 40, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Mái ngói / đồi núi ấm sẫm
+      ctx.fillStyle = '#160609';
+      ctx.beginPath();
+      ctx.moveTo(0, H * 0.42);
+      ctx.lineTo(0, H * 0.355);
+      ctx.quadraticCurveTo(W * 0.28, H * 0.30, W * 0.52, H * 0.355);
+      ctx.quadraticCurveTo(W * 0.78, H * 0.295, W, H * 0.35);
+      ctx.lineTo(W, H * 0.42);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawRiver(t) {
+      const top = H * 0.40;
+      const wg = ctx.createLinearGradient(0, top, 0, H);
+      wg.addColorStop(0, festivalTimer > 0 ? '#361015' : '#1f0b10');
+      wg.addColorStop(0.55, '#12060a');
+      wg.addColorStop(1, '#090305');
+      ctx.fillStyle = wg;
+      ctx.fillRect(0, top, W, H - top);
+
+      for (let i = 0; i < 22; i++) {
+        const py = top + 20 + i * 29 + Math.sin(t * 0.0016 + i) * 4;
+        const w = 34 + Math.sin(t * 0.002 + i * 0.7) * 18 + (i / 22) * 52;
+        const px = W * 0.5 - w * 0.5 + Math.cos(t * 0.0013 + i) * 12;
+        const a = Math.max(0.05, (festivalTimer > 0 ? 0.35 : 0.22) - i * 0.007);
+        ctx.fillStyle = `rgba(253, 224, 71, ${a.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.roundRect(px, py, w, 3, 2);
+        ctx.fill();
+      }
+    }
+
+    function drawLanterns(t) {
+      for (let i = lanterns.length - 1; i >= 0; i--) {
+        const l = lanterns[i];
+        l.life++;
+        l.phase += 0.022;
+        l.y += l.vy;
+        l.x = l.baseX + Math.sin(l.phase) * 18;
+        if (l.life < 55) l.alpha = l.life / 55;
+        else if (l.life > l.maxLife - 85) l.alpha = Math.max(0, (l.maxLife - l.life) / 85);
+        else l.alpha = 1;
+
+        if (l.life >= l.maxLife || l.y < H * 0.39) { lanterns.splice(i, 1); continue; }
+
+        const isSmall = l.tier === 'small';
+        ctx.save();
+        ctx.globalAlpha = l.alpha;
+        ctx.translate(l.x, l.y);
+        ctx.scale(l.scale, l.scale);
+
+        const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 58);
+        glow.addColorStop(0, isSmall ? 'rgba(251, 113, 133, 0.42)' : 'rgba(252, 211, 77, 0.34)');
+        glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, 0, 58, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = isSmall ? '#fb7185' : '#fcd34d';
+        ctx.beginPath();
+        ctx.moveTo(-20, 0); ctx.lineTo(20, 0); ctx.lineTo(13, 13); ctx.lineTo(-13, 13);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#fffbeb';
+        ctx.beginPath();
+        ctx.arc(0, 3, 6 * (0.85 + 0.15 * Math.sin(t * 0.012 + l.phase)), 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = '600 11.5px "Be Vietnam Pro", sans-serif';
+        const nw = ctx.measureText(l.user).width;
+        ctx.font = '400 12px "Be Vietnam Pro", sans-serif';
+        const ww = ctx.measureText(l.wish).width;
+        const bw = Math.min(276, Math.max(112, Math.max(nw, ww) + 22));
+        const by = -52;
+
+        ctx.fillStyle = 'rgba(24, 9, 12, 0.84)';
+        ctx.strokeStyle = isSmall ? 'rgba(251, 113, 133, 0.55)' : 'rgba(252, 211, 77, 0.42)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(-bw / 2, by, bw, 39, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = isSmall ? '#fda4af' : '#fde047';
+        ctx.font = '600 11.5px "Be Vietnam Pro", sans-serif';
+        ctx.fillText(l.user, 0, by + 15);
+        ctx.fillStyle = '#fff7ed';
+        ctx.font = '400 11.8px "Be Vietnam Pro", sans-serif';
+        ctx.fillText(l.wish, 0, by + 30);
+
+        ctx.restore();
+      }
+    }
+
+    function drawSkyLanterns() {
+      for (let i = skyLanterns.length - 1; i >= 0; i--) {
+        const s = skyLanterns[i];
+        s.y += s.vy;
+        s.phase += 0.025;
+        s.x = s.baseX + Math.sin(s.phase) * 20;
+        s.alpha = Math.min(1, s.alpha + 0.035);
+        if (s.y < H * 0.24) s.alpha -= 0.016;
+        if (s.alpha <= 0 || s.y < 105) { skyLanterns.splice(i, 1); continue; }
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, s.alpha);
+        ctx.translate(s.x, s.y);
+
+        const g = ctx.createRadialGradient(0, 0, 5, 0, 0, 72);
+        g.addColorStop(0, 'rgba(251, 146, 60, 0.46)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(0, 0, 72, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath();
+        ctx.moveTo(-14, -17); ctx.lineTo(14, -17); ctx.lineTo(21, 8); ctx.lineTo(-21, 8);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#fef08a';
+        ctx.beginPath();
+        ctx.arc(0, -2, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (s.user) {
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#fde047';
+          ctx.font = '600 12px "Be Vietnam Pro", sans-serif';
+          ctx.fillText(s.user, 0, 25);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '400 12px "Be Vietnam Pro", sans-serif';
+          ctx.fillText(s.wish, 0, 41);
+        }
+
+        ctx.restore();
+      }
+    }
+
+    function drawGrandBoat() {
+      if (!grandBoat) return;
+      grandBoat.x += grandBoat.vx;
+      grandBoat.phase += 0.035;
+      const by = grandBoat.y + Math.sin(grandBoat.phase) * 6;
+      if (grandBoat.x > W + 220) { grandBoat = null; return; }
+
+      ctx.save();
+      ctx.translate(grandBoat.x, by);
+
+      const aura = ctx.createRadialGradient(0, 0, 14, 0, 0, 135);
+      aura.addColorStop(0, 'rgba(252, 211, 77, 0.48)');
+      aura.addColorStop(0.6, 'rgba(251, 113, 133, 0.2)');
+      aura.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = aura;
+      ctx.beginPath();
+      ctx.arc(0, 0, 135, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.moveTo(-76, 6); ctx.quadraticCurveTo(0, 28, 76, 6); ctx.lineTo(56, -5); ctx.lineTo(-56, -5);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.roundRect(-28, -28, 56, 23, 7);
+      ctx.fill();
+
+      ctx.fillStyle = '#450a0a';
+      ctx.textAlign = 'center';
+      ctx.font = '700 10.5px "Be Vietnam Pro", sans-serif';
+      ctx.fillText('✦ HỘI ĐÈN ✦', 0, -13);
+
+      ctx.fillStyle = 'rgba(24, 9, 12, 0.88)';
+      ctx.strokeStyle = 'rgba(252, 211, 77, 0.8)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.roundRect(-134, -70, 268, 37, 11);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#fde047';
+      ctx.font = '600 12px "Be Vietnam Pro", sans-serif';
+      ctx.fillText(grandBoat.user, 0, -54);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '400 11.5px "Be Vietnam Pro", sans-serif';
+      ctx.fillText(grandBoat.wish, 0, -39);
+
+      ctx.restore();
+    }
+
+    function drawFireworks() {
+      for (let i = fireworks.length - 1; i >= 0; i--) {
+        const f = fireworks[i];
+        f.x += f.vx;
+        f.y += f.vy;
+        f.vy += 0.045;
+        f.alpha -= f.fade;
+        if (f.alpha <= 0) { fireworks.splice(i, 1); continue; }
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, f.alpha);
+        ctx.fillStyle = f.color;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function loop(t) {
+      if (festivalTimer > 0) festivalTimer--;
+      ctx.clearRect(0, 0, W, H);
+      drawBg();
+      drawRiver(t);
+      drawLanterns(t);
+      drawSkyLanterns();
+      drawGrandBoat();
+      drawFireworks();
+      requestAnimationFrame(loop);
+    }
+
+    renderVip();
+    addLantern('normal', 'Thanh Hà', 'Chúc bạn một năm rực rỡ và tràn đầy niềm vui.');
+    setTimeout(() => addLantern('small', 'Quốc Bảo', 'Mong mọi tâm nguyện đều sớm hóa thành hiện thực.'), 850);
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

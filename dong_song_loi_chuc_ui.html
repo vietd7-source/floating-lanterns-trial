@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dòng Sông Lời Chúc — TikTok Live UI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #050a14;
+      --bg-mid: #0c192c;
+      --gold: #f5c97b;
+      --gold-soft: rgba(245, 201, 123, 0.28);
+      --lotus: #ff8fb1;
+      --lotus-soft: rgba(255, 143, 177, 0.32);
+      --sky-lantern: #ffd180;
+      --royal: #7dd3fc;
+      --royal-soft: rgba(125, 211, 252, 0.35);
+      --glass-bg: rgba(8, 17, 32, 0.52);
+      --glass-border: rgba(255, 232, 186, 0.16);
+      --text-main: #f8fafc;
+      --text-muted: rgba(226, 232, 240, 0.72);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #03060c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      color: var(--text-main);
+    }
+
+    /* Khung dọc chuẩn TikTok Live 9:16 (720x1280 tỉ lệ gốc, tự co giãn vừa màn hình) */
+    .stage-wrapper {
+      position: relative;
+      width: min(100vw, calc(100vh * 9 / 16));
+      height: min(100vh, calc(100vw * 16 / 9));
+      aspect-ratio: 9 / 16;
+      background: var(--bg-deep);
+      box-shadow: 0 0 80px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 224, 170, 0.12);
+      overflow: hidden;
+    }
+
+    canvas#riverCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+
+    /* Lớp phủ UI tối giản, tinh tế, chừa vùng an toàn dưới cho chat & nút quà của TikTok */
+    .hud-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 28px 20px 26px 20px;
+    }
+
+    /* Header phía trên: Tên chủ đề + Trạng thái trực tiếp */
+    .top-bar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 10px 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .brand-eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 600;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 10px #4ade80;
+      animation: pulseDot 2s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.65; }
+    }
+
+    .brand-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #fff8ea;
+      line-height: 1.1;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* Bảng Tri Ân VIP góc trên phải */
+    .vip-box {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(245, 201, 123, 0.24);
+      border-radius: 18px;
+      padding: 10px 14px;
+      min-width: 148px;
+      max-width: 185px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .vip-header {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .vip-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .vip-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px 7px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .vip-rank {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0;
+      background: rgba(245, 201, 123, 0.2);
+      color: var(--gold);
+    }
+
+    .vip-item:nth-child(1) .vip-rank {
+      background: linear-gradient(135deg, #fde68a, #f59e0b);
+      color: #1e1b18;
+    }
+
+    .vip-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #f1f5f9;
+      font-weight: 500;
+    }
+
+    .vip-pts {
+      font-size: 10px;
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* Thẻ thông báo lời chúc nổi bật khi có Gift lớn / Giọng AI đang đọc */
+    .spotlight-banner {
+      align-self: center;
+      margin-top: 12px;
+      background: linear-gradient(135deg, rgba(15, 27, 48, 0.82), rgba(32, 22, 38, 0.82));
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(245, 201, 123, 0.42);
+      border-radius: 22px;
+      padding: 12px 20px;
+      max-width: 92%;
+      text-align: center;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5), 0 0 28px rgba(245, 201, 123, 0.18);
+      opacity: 0;
+      transform: translateY(-10px) scale(0.97);
+      transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .spotlight-banner.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .spotlight-tag {
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .spotlight-quote {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 21px;
+      font-style: italic;
+      color: #fffdf7;
+      line-height: 1.25;
+    }
+
+    .spotlight-author {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Vùng dưới cùng: Thanh hướng dẫn nhẹ nhàng (đặt ở vị trí gọn gàng không che khuất dòng sông) */
+    .bottom-guide {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .guide-pill {
+      background: rgba(6, 13, 25, 0.65);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      padding: 7px 16px;
+      font-size: 11.5px;
+      color: rgba(248, 250, 252, 0.9);
+      letter-spacing: 0.01em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .guide-pill span.accent {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* Bảng điều khiển Preview (chỉ để xem trước giao diện & test hiệu ứng, nhấn phím H để ẩn/hiện) */
+    .preview-dock {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 50;
+      width: 248px;
+      background: rgba(10, 15, 26, 0.9);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+      font-size: 11.5px;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .preview-dock.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+    }
+
+    .dock-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .dock-title {
+      font-weight: 600;
+      color: var(--gold);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .dock-hint {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .dock-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9px;
+      padding: 7px 9px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 11.5px;
+      outline: none;
+      margin-bottom: 8px;
+    }
+
+    .dock-input:focus {
+      border-color: var(--gold);
+    }
+
+    .dock-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .dock-btn {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #f8fafc;
+      border-radius: 9px;
+      padding: 7px 8px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      text-align: center;
+    }
+
+    .dock-btn:hover {
+      background: rgba(245, 201, 123, 0.18);
+      border-color: rgba(245, 201, 123, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .dock-btn.lotus {
+      border-color: rgba(255, 143, 177, 0.35);
+    }
+    .dock-btn.lotus:hover {
+      background: rgba(255, 143, 177, 0.22);
+    }
+
+    .dock-btn.royal {
+      grid-column: span 2;
+      background: linear-gradient(135deg, rgba(245, 201, 123, 0.22), rgba(125, 211, 252, 0.18));
+      border-color: rgba(245, 201, 123, 0.5);
+      color: #fff8e7;
+      font-weight: 600;
+    }
+
+    .toggle-show-btn {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 49;
+      background: rgba(10, 15, 26, 0.85);
+      color: var(--gold);
+      border: 1px solid rgba(245, 201, 123, 0.35);
+      border-radius: 999px;
+      padding: 7px 13px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+    }
+
+    .preview-dock.hidden + .toggle-show-btn {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage-wrapper" id="stage">
+    <canvas id="riverCanvas" width="720" height="1280"></canvas>
+
+    <div class="hud-layer">
+      <div class="top-bar">
+        <div class="brand-card">
+          <div class="brand-eyebrow">
+            <span class="live-dot"></span>
+            ĐÊM AN YÊN
+          </div>
+          <div class="brand-title">Dòng Sông Lời Chúc</div>
+          <div class="brand-sub">Gửi một điều lành — Thắp một ngọn đèn</div>
+        </div>
+
+        <div class="vip-box">
+          <div class="vip-header">
+            <span>Bảng Tri Ân</span>
+            <span>✦</span>
+          </div>
+          <div class="vip-list" id="vipList"></div>
+        </div>
+      </div>
+
+      <div class="spotlight-banner" id="spotlightBanner">
+        <div class="spotlight-tag" id="spotlightTag">LỜI CHÚC NỔI BẬT</div>
+        <div class="spotlight-quote" id="spotlightQuote">“Chúc gia đình luôn bình an và mạnh khỏe.”</div>
+        <div class="spotlight-author" id="spotlightAuthor">— Minh Anh</div>
+      </div>
+
+      <div class="bottom-guide">
+        <div class="guide-pill">
+          <span>Bình luận = <span class="accent">Đèn Giấy</span></span>
+          <span>•</span>
+          <span>Quà 1 xu = <span class="accent">Hoa Sen</span></span>
+          <span>•</span>
+          <span>Quà lớn = <span class="accent">Đèn Trời &amp; Thuyền</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bảng điều khiển xem trước (nhấn phím H để ẩn sạch UI khi quay/chụp màn hình) -->
+  <div class="preview-dock" id="previewDock">
+    <div class="dock-top">
+      <span class="dock-title">Xem trước hiệu ứng</span>
+      <span class="dock-hint">Phím [H] ẩn</span>
+    </div>
+    <input type="text" class="dock-input" id="customWishInput" placeholder="Nhập lời chúc thử nghiệm..." maxlength="60" />
+    <div class="dock-grid">
+      <button class="dock-btn" onclick="spawnDemo('comment')">+ Đèn Giấy (Cmt)</button>
+      <button class="dock-btn lotus" onclick="spawnDemo('small')">+ Hoa Sen (1 xu)</button>
+      <button class="dock-btn" onclick="spawnDemo('medium')">+ Đèn Trời (20 xu)</button>
+      <button class="dock-btn" onclick="spawnDemo('heart')">+ Thả Tim</button>
+      <button class="dock-btn royal" onclick="spawnDemo('large')">✦ Thuyền Hoàng Gia (100+ xu)</button>
+    </div>
+  </div>
+  <button class="toggle-show-btn" id="showDockBtn" onclick="toggleDock(false)">Hiện bảng thử</button>
+
+  <script>
+    const canvas = document.getElementById('riverCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;   // 720
+    const H = canvas.height;  // 1280
+
+    const SAMPLE_USERS = [
+      { name: 'Minh Anh', wish: 'Chúc gia đình luôn bình an và khỏe mạnh.' },
+      { name: 'Khánh Vy', wish: 'Mong mọi dự định sắp tới đều suôn sẻ.' },
+      { name: 'Hoàng Nam', wish: 'Chúc người thương một đêm thật ngon giấc.' },
+      { name: 'Thu Thảo', wish: 'Bình yên nhé, mọi chuyện rồi sẽ ổn thôi.' },
+      { name: 'Đức Duy', wish: 'Chúc công việc hanh thông, vạn sự như ý.' },
+      { name: 'Ngọc Linh', wish: 'Gửi chút ấm áp tới những ai đang mệt mỏi.' }
+    ];
+
+    const VIP_BOARD = [
+      { name: 'Bảo Trân', pts: '240✦' },
+      { name: 'Gia Huy', pts: '150✦' },
+      { name: 'Phương Mai', pts: '85✦' }
+    ];
+
+    function renderVipBoard() {
+      const el = document.getElementById('vipList');
+      el.innerHTML = VIP_BOARD.map((item, idx) => `
+        <div class="vip-item">
+          <div class="vip-rank">${idx + 1}</div>
+          <div class="vip-name">${escapeHtml(item.name)}</div>
+          <div class="vip-pts">${escapeHtml(item.pts)}</div>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    // Sao trời & đom đóm nhẹ nhàng
+    const stars = Array.from({ length: 75 }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * (H * 0.42),
+      r: Math.random() * 1.6 + 0.4,
+      twinkle: Math.random() * Math.PI * 2,
+      speed: Math.random() * 0.025 + 0.01
+    }));
+
+    const fireflies = Array.from({ length: 28 }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H * 0.85,
+      r: Math.random() * 2.2 + 1,
+      phase: Math.random() * Math.PI * 2,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: -Math.random() * 0.25 - 0.08
+    }));
+
+    const ripples = [];
+    const lanterns = [];
+    const skyLanterns = [];
+    let royalBoat = null;
+    let royalGlowTimer = 0;
+    let spotlightTimeout = null;
+
+    function triggerSpotlight(tag, quote, author) {
+      const banner = document.getElementById('spotlightBanner');
+      document.getElementById('spotlightTag').textContent = tag;
+      document.getElementById('spotlightQuote').textContent = `“${quote}”`;
+      document.getElementById('spotlightAuthor').textContent = `— ${author}`;
+      banner.classList.add('active');
+      clearTimeout(spotlightTimeout);
+      spotlightTimeout = setTimeout(() => {
+        banner.classList.remove('active');
+      }, 5200);
+    }
+
+    function addRipple(x, y, color = 'rgba(245, 201, 123, 0.45)') {
+      ripples.push({ x, y, r: 6, maxR: 68, alpha: 0.7, color });
+    }
+
+    function createLantern(tier, userName, wishText) {
+      const cleanWish = (wishText || 'Chúc đêm an lành và nhiều niềm vui.').trim();
+      const shortWish = cleanWish.length > 42 ? cleanWish.slice(0, 42) + '…' : cleanWish;
+
+      // Đèn trôi từ khu vực giữa-dưới dòng sông lên nhẹ theo chiều sâu
+      const startY = H * 0.84 + Math.random() * 60;
+      const startX = 130 + Math.random() * (W - 260);
+
+      lanterns.push({
+        tier,
+        userName,
+        wish: shortWish,
+        x: startX,
+        y: startY,
+        baseX: startX,
+        phase: Math.random() * Math.PI * 2,
+        vy: tier === 'small' ? -0.34 : -0.46,
+        scale: tier === 'small' ? 1.25 : 1.0,
+        alpha: 0,
+        life: 0,
+        maxLife: tier === 'small' ? 1400 : 1050
+      });
+
+      addRipple(startX, startY, tier === 'small' ? 'rgba(255, 143, 177, 0.55)' : 'rgba(245, 201, 123, 0.45)');
+
+      if (tier === 'small') {
+        triggerSpotlight('ĐÈN HOA SEN · QUÀ 1 XU', shortWish, userName);
+      }
+    }
+
+    function createSkyLantern(userName, wishText) {
+      const cleanWish = (wishText || 'Bay cao mọi ước mơ và bình an.').trim();
+      const shortWish = cleanWish.length > 44 ? cleanWish.slice(0, 44) + '…' : cleanWish;
+      skyLanterns.push({
+        x: 150 + Math.random() * (W - 300),
+        y: H * 0.72,
+        baseX: 150 + Math.random() * (W - 300),
+        phase: Math.random() * Math.PI * 2,
+        vy: -1.15,
+        alpha: 0,
+        userName,
+        wish: shortWish
+      });
+      triggerSpotlight('ĐÈN KHỔNG MINH · LỜI CHÚC BAY CAO', shortWish, userName);
+    }
+
+    function createRoyalBoat(userName, wishText) {
+      const cleanWish = (wishText || 'Nguyện vạn sự bình an, rạng rỡ mọi nẻo đường.').trim();
+      const shortWish = cleanWish.length > 48 ? cleanWish.slice(0, 48) + '…' : cleanWish;
+      royalBoat = {
+        x: -170,
+        y: H * 0.62,
+        vx: 1.55,
+        phase: 0,
+        userName,
+        wish: shortWish
+      };
+      royalGlowTimer = 360;
+      triggerSpotlight('✦ THIỀN HOA ĐĂNG HOÀNG GIA ✦', shortWish, userName);
+    }
+
+    function spawnDemo(type) {
+      const sample = SAMPLE_USERS[Math.floor(Math.random() * SAMPLE_USERS.length)];
+      const inputVal = document.getElementById('customWishInput').value.trim();
+      const wish = inputVal || sample.wish;
+
+      if (type === 'comment') {
+        createLantern('normal', sample.name, wish);
+      } else if (type === 'small') {
+        createLantern('small', sample.name, wish);
+      } else if (type === 'medium') {
+        createSkyLantern(sample.name, wish);
+      } else if (type === 'heart') {
+        for (let i = 0; i < 4; i++) {
+          addRipple(120 + Math.random() * (W - 240), H * 0.56 + Math.random() * (H * 0.34), 'rgba(255, 182, 206, 0.45)');
+        }
+      } else if (type === 'large') {
+        createRoyalBoat(sample.name, wish);
+      }
+    }
+
+    function toggleDock(forceHide) {
+      const dock = document.getElementById('previewDock');
+      if (typeof forceHide === 'boolean') {
+        dock.classList.toggle('hidden', forceHide);
+      } else {
+        dock.classList.toggle('hidden');
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'h' && document.activeElement.tagName !== 'INPUT') {
+        toggleDock();
+      }
+    });
+
+    // Vẽ bầu trời đêm, vầng trăng & dãy núi mờ
+    function drawSkyAndMoon(time) {
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.45);
+      if (royalGlowTimer > 0) {
+        skyGrad.addColorStop(0, '#071326');
+        skyGrad.addColorStop(0.65, '#122846');
+        skyGrad.addColorStop(1, '#1d3654');
+      } else {
+        skyGrad.addColorStop(0, '#040811');
+        skyGrad.addColorStop(0.6, '#091528');
+        skyGrad.addColorStop(1, '#11223b');
+      }
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, H * 0.46);
+
+      // Sao lấp lánh
+      stars.forEach(s => {
+        s.twinkle += s.speed;
+        const a = 0.25 + 0.65 * (0.5 + 0.5 * Math.sin(s.twinkle));
+        ctx.fillStyle = `rgba(255, 248, 225, ${a.toFixed(2)})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Vầng trăng & quầng sáng dịu
+      const moonX = W * 0.5;
+      const moonY = H * 0.21;
+      const moonHalo = ctx.createRadialGradient(moonX, moonY, 18, moonX, moonY, 170);
+      moonHalo.addColorStop(0, 'rgba(255, 244, 214, 0.35)');
+      moonHalo.addColorStop(0.45, 'rgba(245, 201, 123, 0.11)');
+      moonHalo.addColorStop(1, 'rgba(245, 201, 123, 0)');
+      ctx.fillStyle = moonHalo;
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, 170, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fff5db';
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, 44, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Dãy núi xa yên bình
+      ctx.fillStyle = '#081324';
+      ctx.beginPath();
+      ctx.moveTo(0, H * 0.42);
+      ctx.lineTo(0, H * 0.35);
+      ctx.quadraticCurveTo(W * 0.22, H * 0.29, W * 0.45, H * 0.355);
+      ctx.quadraticCurveTo(W * 0.74, H * 0.28, W, H * 0.34);
+      ctx.lineTo(W, H * 0.42);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Vẽ mặt sông & ánh trăng phản chiếu gợn sóng
+    function drawRiver(time) {
+      const riverTop = H * 0.40;
+      const waterGrad = ctx.createLinearGradient(0, riverTop, 0, H);
+      waterGrad.addColorStop(0, '#0b1d34');
+      waterGrad.addColorStop(0.45, '#071426');
+      waterGrad.addColorStop(1, '#040c18');
+      ctx.fillStyle = waterGrad;
+      ctx.fillRect(0, riverTop, W, H - riverTop);
+
+      // Đường chân trời sông dịu mắt
+      const horizonGlow = ctx.createLinearGradient(0, riverTop - 12, 0, riverTop + 26);
+      horizonGlow.addColorStop(0, 'rgba(245, 201, 123, 0)');
+      horizonGlow.addColorStop(0.5, 'rgba(245, 201, 123, 0.14)');
+      horizonGlow.addColorStop(1, 'rgba(245, 201, 123, 0)');
+      ctx.fillStyle = horizonGlow;
+      ctx.fillRect(0, riverTop - 12, W, 38);
+
+      // Vệt sáng trăng gợn trên mặt nước
+      for (let i = 0; i < 24; i++) {
+        const py = riverTop + 18 + i * 28 + Math.sin(time * 0.0015 + i) * 4;
+        const width = 34 + Math.sin(time * 0.002 + i * 0.8) * 18 + (i / 24) * 52;
+        const px = W * 0.5 - width * 0.5 + Math.cos(time * 0.0012 + i) * 14;
+        const alpha = Math.max(0.04, 0.24 - i * 0.007);
+        ctx.fillStyle = `rgba(255, 236, 190, ${alpha.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.roundRect(px, py, width, 3.2, 2);
+        ctx.fill();
+      }
+
+      // Gợn sóng nhẹ ngang mặt sông
+      ctx.strokeStyle = 'rgba(148, 197, 255, 0.06)';
+      ctx.lineWidth = 1.2;
+      for (let row = 0; row < 9; row++) {
+        const yBase = riverTop + 55 + row * 78;
+        ctx.beginPath();
+        for (let x = 0; x <= W; x += 36) {
+          const y = yBase + Math.sin(x * 0.015 + time * 0.0012 + row) * 3;
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+    }
+
+    function drawRipples() {
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const rp = ripples[i];
+        rp.r += 0.55;
+        rp.alpha -= 0.006;
+        if (rp.alpha <= 0 || rp.r > rp.maxR) {
+          ripples.splice(i, 1);
+          continue;
+        }
+        ctx.save();
+        ctx.strokeStyle = rp.color;
+        ctx.globalAlpha = Math.max(0, rp.alpha);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(rp.x, rp.y, rp.r * 1.4, rp.r * 0.45, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function drawLanternItem(l, time) {
+      l.life += 1;
+      l.phase += 0.022;
+      l.y += l.vy;
+      l.x = l.baseX + Math.sin(l.phase) * 18;
+
+      if (l.life < 60) {
+        l.alpha = l.life / 60;
+      } else if (l.life > l.maxLife - 90) {
+        l.alpha = Math.max(0, (l.maxLife - l.life) / 90);
+      } else {
+        l.alpha = 1;
+      }
+
+      if (l.life >= l.maxLife || l.y < H * 0.39) {
+        return false;
+      }
+
+      const isLotus = l.tier === 'small';
+      const glowColor = isLotus ? 'rgba(255, 143, 177, 0.34)' : 'rgba(245, 201, 123, 0.30)';
+      const mainColor = isLotus ? '#ff9ebb' : '#ffd27d';
+      const coreColor = isLotus ? '#ffe4ec' : '#fff8e1';
+
+      ctx.save();
+      ctx.globalAlpha = l.alpha;
+      ctx.translate(l.x, l.y);
+      ctx.scale(l.scale, l.scale);
+
+      // Quầng sáng ấm áp trên mặt nước
+      const halo = ctx.createRadialGradient(0, 0, 4, 0, 0, 56);
+      halo.addColorStop(0, glowColor);
+      halo.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(0, 0, 56, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Thân đèn
+      ctx.fillStyle = mainColor;
+      ctx.beginPath();
+      ctx.moveTo(-20, 0);
+      ctx.lineTo(20, 0);
+      ctx.lineTo(14, 13);
+      ctx.lineTo(-14, 13);
+      ctx.closePath();
+      ctx.fill();
+
+      // Cánh sen nhẹ nếu là đèn quà 1 xu
+      if (isLotus) {
+        ctx.fillStyle = '#ff6b9d';
+        [-14, -7, 0, 7, 14].forEach((px, idx) => {
+          ctx.beginPath();
+          ctx.ellipse(px, 2, 5.5, 9, (idx - 2) * 0.14, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      // Ánh nến bên trong
+      const flicker = 0.85 + 0.15 * Math.sin(time * 0.012 + l.phase);
+      ctx.fillStyle = coreColor;
+      ctx.beginPath();
+      ctx.arc(0, 3, 6.5 * flicker, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Thẻ tên & lời chúc gọn đẹp phía trên đèn
+      ctx.font = '600 12px "Be Vietnam Pro", sans-serif';
+      const nameWidth = ctx.measureText(l.userName).width;
+      ctx.font = '400 12.5px "Be Vietnam Pro", sans-serif';
+      const wishWidth = ctx.measureText(l.wish).width;
+      const boxW = Math.min(280, Math.max(110, Math.max(nameWidth, wishWidth) + 24));
+      const boxH = 40;
+      const boxY = -54;
+
+      ctx.fillStyle = 'rgba(7, 15, 29, 0.76)';
+      ctx.strokeStyle = isLotus ? 'rgba(255, 143, 177, 0.45)' : 'rgba(245, 201, 123, 0.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(-boxW / 2, boxY, boxW, boxH, 11);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.textAlign = 'center';
+      ctx.fillStyle = isLotus ? '#ffb3c9' : '#f5c97b';
+      ctx.font = '600 11.5px "Be Vietnam Pro", sans-serif';
+      ctx.fillText(l.userName, 0, boxY + 15);
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = '400 12px "Be Vietnam Pro", sans-serif';
+      ctx.fillText(l.wish, 0, boxY + 31);
+
+      ctx.restore();
+      return true;
+    }
+
+    function drawSkyLanterns() {
+      for (let i = skyLanterns.length - 1; i >= 0; i--) {
+        const sl = skyLanterns[i];
+        sl.y += sl.vy;
+        sl.phase += 0.025;
+        sl.x = sl.baseX + Math.sin(sl.phase) * 22;
+        sl.alpha = Math.min(1, sl.alpha + 0.03);
+        if (sl.y < H * 0.25) sl.alpha -= 0.015;
+
+        if (sl.alpha <= 0 || sl.y < 120) {
+          skyLanterns.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, sl.alpha);
+        ctx.translate(sl.x, sl.y);
+
+        const glow = ctx.createRadialGradient(0, 0, 5, 0, 0, 75);
+        glow.addColorStop(0, 'rgba(255, 209, 128, 0.42)');
+        glow.addColorStop(1, 'rgba(255, 209, 128, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, 0, 75, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Lồng đèn trời
+        ctx.fillStyle = '#ffbe6b';
+        ctx.beginPath();
+        ctx.moveTo(-14, -18);
+        ctx.lineTo(14, -18);
+        ctx.lineTo(22, 8);
+        ctx.lineTo(-22, 8);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#fff3cf';
+        ctx.beginPath();
+        ctx.arc(0, -2, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffe8b3';
+        ctx.font = '600 12px "Be Vietnam Pro", sans-serif';
+        ctx.fillText(sl.userName, 0, 26);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '400 12px "Be Vietnam Pro", sans-serif';
+        ctx.fillText(sl.wish, 0, 42);
+
+        ctx.restore();
+      }
+    }
+
+    function drawRoyalBoat(time) {
+      if (!royalBoat) return;
+      royalBoat.x += royalBoat.vx;
+      royalBoat.phase += 0.03;
+      const bobY = royalBoat.y + Math.sin(royalBoat.phase) * 5;
+
+      if (royalBoat.x > W + 190) {
+        royalBoat = null;
+        return;
+      }
+
+      ctx.save();
+      ctx.translate(royalBoat.x, bobY);
+
+      const aura = ctx.createRadialGradient(0, 0, 12, 0, 0, 110);
+      aura.addColorStop(0, 'rgba(245, 201, 123, 0.35)');
+      aura.addColorStop(0.6, 'rgba(125, 211, 252, 0.14)');
+      aura.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = aura;
+      ctx.beginPath();
+      ctx.arc(0, 0, 110, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Thân thuyền hoa đăng
+      ctx.fillStyle = '#f5c97b';
+      ctx.beginPath();
+      ctx.moveTo(-64, 6);
+      ctx.quadraticCurveTo(0, 24, 64, 6);
+      ctx.lineTo(48, -4);
+      ctx.lineTo(-48, -4);
+      ctx.closePath();
+      ctx.fill();
+
+      // Mái lầu sáng đèn
+      ctx.fillStyle = 'rgba(255, 244, 214, 0.92)';
+      ctx.beginPath();
+      ctx.roundRect(-24, -24, 48, 20, 6);
+      ctx.fill();
+
+      ctx.fillStyle = '#132642';
+      ctx.textAlign = 'center';
+      ctx.font = '700 10px "Be Vietnam Pro", sans-serif';
+      ctx.fillText('✦ VIP ✦', 0, -11);
+
+      // Bảng tên & lời chúc
+      ctx.fillStyle = 'rgba(8, 16, 30, 0.84)';
+      ctx.strokeStyle = 'rgba(245, 201, 123, 0.65)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.roundRect(-125, -66, 250, 36, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#fde68a';
+      ctx.font = '600 12px "Be Vietnam Pro", sans-serif';
+      ctx.fillText(royalBoat.userName, 0, -51);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '400 11.5px "Be Vietnam Pro", sans-serif';
+      ctx.fillText(royalBoat.wish, 0, -36);
+
+      ctx.restore();
+    }
+
+    function drawFireflies(time) {
+      fireflies.forEach(f => {
+        f.x += f.vx + Math.sin(time * 0.001 + f.phase) * 0.18;
+        f.y += f.vy;
+        f.phase += 0.03;
+
+        if (f.y < H * 0.15) {
+          f.y = H * 0.88;
+          f.x = Math.random() * W;
+        }
+        if (f.x < 0) f.x = W;
+        if (f.x > W) f.x = 0;
+
+        const alpha = 0.2 + 0.55 * (0.5 + 0.5 * Math.sin(f.phase));
+        ctx.fillStyle = `rgba(255, 232, 163, ${alpha.toFixed(2)})`;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function loop(time) {
+      if (royalGlowTimer > 0) royalGlowTimer--;
+      ctx.clearRect(0, 0, W, H);
+      drawSkyAndMoon(time);
+      drawRiver(time);
+      drawRipples();
+
+      for (let i = lanterns.length - 1; i >= 0; i--) {
+        const alive = drawLanternItem(lanterns[i], time);
+        if (!alive) lanterns.splice(i, 1);
+      }
+
+      drawSkyLanterns();
+      drawRoyalBoat(time);
+      drawFireflies(time);
+
+      requestAnimationFrame(loop);
+    }
+
+    renderVipBoard();
+
+    // Khởi tạo vài ngọn đèn mẫu ban đầu để khung hình có chiều sâu ngay khi mở
+    createLantern('normal', 'Minh Anh', 'Chúc gia đình luôn bình an và khỏe mạnh.');
+    setTimeout(() => createLantern('small', 'Khánh Vy', 'Mong mọi dự định sắp tới đều suôn sẻ.'), 900);
+    setTimeout(() => createLantern('normal', 'Hoàng Nam', 'Chúc người thương một đêm thật ngon giấc.'), 1800);
+
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
