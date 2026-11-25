@@ -1,0 +1,12 @@
+{
+  "words": [
+    "dcm",
+    "dmm",
+    "vcl",
+    "clgt",
+    "fuck",
+    "shit",
+    "bitch"
+  ],
+  "notes": "Starter list only — expand before going live. Matching should be case-insensitive and tolerant of spacing/diacritic variants (handled in wishStore filtering logic, not here)."
+}
